@@ -2,6 +2,6 @@
   "required": true,
   "package": "gg.mythoscraft.client.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["PlayerEntityMixin"],
+  "client": ["PlayerEntityMixin", "AbstractClientPlayerEntityMixin", "SimpleOptionAccessor"],
   "injectors": { "defaultRequire": 1 }
 }

@@ -7,6 +7,7 @@ import { SkinsTab } from "../components/tabs/SkinsTab";
 import { StoreTab } from "../components/tabs/StoreTab";
 import { ClipsPage } from "../components/tabs/ClipsPage";
 import { CreatorPage } from "../components/tabs/CreatorPage";
+import { MythosCosmeticsPage } from "../components/tabs/MythosCosmeticsPage";
 import { BrowseTabWrapper } from "../components/profiles/BrowseTabWrapper";
 import { ProfilesTabV2 } from "../components/tabs/ProfilesTabV2";
 import { ProfileDetailViewV2Wrapper } from "../components/profiles/ProfileDetailViewV2Wrapper";
@@ -72,6 +73,10 @@ export const router = createHashRouter([
       {
         path: "clips",
         element: <ClipsPage />,
+      },
+      {
+        path: "cosmetics",
+        element: <MythosCosmeticsPage />,
       },
       {
         path: "creator",

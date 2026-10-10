@@ -19,6 +19,7 @@ pub mod minecraft_auth_command;
 pub mod minecraft_command;
 pub mod modrinth_commands;
 pub mod nrc_commands;
+pub mod mythos_command;
 pub mod pack_fallback_commands;
 pub mod pack_rollout_commands;
 pub mod permission_commands;

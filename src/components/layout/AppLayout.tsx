@@ -86,7 +86,7 @@ export function AppLayout({
     { id: "profiles", icon: "solar:user-id-bold", label: t("nav.profiles") },
     { id: "mods", icon: "solar:widget-bold", label: t("nav.mods") },
     { id: "skins", icon: "solar:emoji-funny-circle-bold", label: t("nav.skins") },
-    { id: "capes", icon: "solar:shop-bold", label: t("nav.capes") },
+    { id: "cosmetics", icon: "solar:magic-stick-3-bold", label: "Cosmetics" },
     ...(clipsEnabled
       ? [{ id: "clips", icon: "solar:videocamera-record-bold", label: t("nav.clips") }]
       : []),

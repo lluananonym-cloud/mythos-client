@@ -3,6 +3,7 @@ package gg.mythoscraft.client;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -11,6 +12,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.command.CommandSource;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -42,6 +44,7 @@ public class MythosClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> login(client));
+        Features.register();
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(
                 ClientCommandManager.literal("mcc")
@@ -54,6 +57,12 @@ public class MythosClient implements ClientModInitializer {
                             }
                             return 1;
                         })
+                        .then(ClientCommandManager.literal("hud")
+                                .executes(ctx -> hud(ctx.getSource(), "all"))
+                                .then(ClientCommandManager.argument("element", StringArgumentType.word())
+                                        .suggests((ctx, b) -> CommandSource.suggestMatching(
+                                                new String[]{"fps", "cps", "tasten", "koordinaten"}, b))
+                                        .executes(ctx -> hud(ctx.getSource(), StringArgumentType.getString(ctx, "element")))))
                         .then(ClientCommandManager.argument("anzahl", IntegerArgumentType.integer(1)).executes(ctx -> {
                             int amount = IntegerArgumentType.getInteger(ctx, "anzahl");
                             give(amount);
@@ -62,13 +71,14 @@ public class MythosClient implements ClientModInitializer {
 
         HudRenderCallback.EVENT.register((ctx, tickCounter) -> {
             MinecraftClient mc = MinecraftClient.getInstance();
-            if (mc.options.hudHidden || mc.getDebugHud().shouldShowDebugHud()) return;
+            if (!MythosConfig.get().hud || mc.options.hudHidden || mc.getDebugHud().shouldShowDebugHud()) return;
             MutableText line = icon().append(Text.literal(" Mythos Client").formatted(Formatting.WHITE));
             if (profile != null) {
                 if (plus()) line.append(Text.literal(" Plus").formatted(Formatting.GOLD));
                 line.append(Text.literal(" · " + coins() + " Coins").formatted(Formatting.YELLOW));
             }
             ctx.drawTextWithShadow(mc.textRenderer, line, 4, 4, 0xFFFFFF);
+            Features.renderHud(ctx, mc, 16);
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -78,7 +88,7 @@ public class MythosClient implements ClientModInitializer {
             for (AbstractClientPlayerEntity p : client.world.getPlayers()) {
                 String id = clean(p.getUuid());
                 Long last = ASKED.get(id);
-                if (!PLAYERS.containsKey(id) && (last == null || now - last > 60_000)) {
+                if (last == null || now - last > 60_000) {
                     unknown.add(id);
                     ASKED.put(id, now);
                 }
@@ -87,7 +97,9 @@ public class MythosClient implements ClientModInitializer {
             MythosApi.players(unknown).thenAccept(res -> {
                 for (JsonElement el : res.getAsJsonArray("players")) {
                     JsonObject o = el.getAsJsonObject();
-                    PLAYERS.put(o.get("uuid").getAsString(), o.get("plus").getAsBoolean());
+                    String id = o.get("uuid").getAsString();
+                    PLAYERS.put(id, o.get("plus").getAsBoolean());
+                    CapeManager.setPlayerCape(id, capeInfo(o.get("cape")));
                 }
             }).exceptionally(e -> null);
         });
@@ -108,6 +120,7 @@ public class MythosClient implements ClientModInitializer {
                 token = res.get("token").getAsString();
                 profile = res.getAsJsonObject("profile");
                 PLAYERS.put(clean(uuid), plus());
+                ASKED.remove(clean(uuid)); // eigenes Cape gleich mit abfragen
                 LOG.info("Angemeldet als {} (Plus: {})", username, plus());
             } catch (Exception e) {
                 LOG.warn("Mythos-Anmeldung fehlgeschlagen: {}", e.getMessage());
@@ -115,6 +128,22 @@ public class MythosClient implements ClientModInitializer {
         }, "Mythos Login");
         t.setDaemon(true);
         t.start();
+    }
+
+    private static int hud(net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource source, String element) {
+        Boolean state = Features.toggleHud(element);
+        if (state == null) {
+            source.sendFeedback(prefix().append(Text.literal("Gibt es nicht. Möglich: fps, cps, tasten, koordinaten").formatted(Formatting.RED)));
+        } else {
+            source.sendFeedback(prefix().append(Text.literal("HUD " + element + ": " + (state ? "an" : "aus"))));
+        }
+        return 1;
+    }
+
+    private static CapeManager.CapeInfo capeInfo(JsonElement el) {
+        if (el == null || !el.isJsonObject()) return null;
+        JsonObject c = el.getAsJsonObject();
+        return new CapeManager.CapeInfo(c.get("url").getAsString(), c.get("frames").getAsInt(), c.get("frameTimeMs").getAsInt());
     }
 
     private static void give(int amount) {
