@@ -290,7 +290,12 @@ jobs:
           
           cd - > /dev/null
           
-          yarn tauri signer sign "$BUNDLE_DIR/$APPIMAGE"
+          # Mythos: ohne eigenen Updater-Schlüssel wird nicht signiert (Updates sind aus).
+          if [ -n "$TAURI_PRIVATE_KEY" ]; then
+            yarn tauri signer sign "$BUNDLE_DIR/$APPIMAGE"
+          else
+            echo "Kein TAURI_PRIVATE_KEY gesetzt, Signatur übersprungen."
+          fi
           
           cd "$BUNDLE_DIR"
           rm -rf squashfs-root appimagetool-x86_64.AppImage
@@ -381,7 +386,7 @@ jobs:
           ls -R "${{ matrix.output_path }}" || true
           echo "-----------------------------------"
           
-          APP_BASE_NAME="NoRisk Launcher" # Dein productName
+          APP_BASE_NAME="Mythos Launcher" # Dein productName
           APPIMAGE_DIR=${{ matrix.output_path }}/appimage
           DEB_DIR=${{ matrix.output_path }}/deb
           
@@ -393,13 +398,13 @@ jobs:
           mv "$APPIMAGE_DIR"/*.AppImage "$APPIMAGE_DIR"/${{ matrix.asset_name_base }}.AppImage
           
           # Verschiebe und benenne AppImage Signatur um (verwende einfachen Wildcard)
-          mv "$APPIMAGE_DIR"/*.AppImage.sig "$APPIMAGE_DIR"/${{ matrix.asset_name_base }}.AppImage.sig
+          mv "$APPIMAGE_DIR"/*.AppImage.sig "$APPIMAGE_DIR"/${{ matrix.asset_name_base }}.AppImage.sig || true
           
           # Verschiebe und benenne Deb Paket um
           mv "$DEB_DIR"/*.deb "$APPIMAGE_DIR"/${{ matrix.asset_name_base }}.deb
           
           # Verschiebe und benenne Deb Signatur um
-          mv "$DEB_DIR"/*.deb.sig "$APPIMAGE_DIR"/${{ matrix.asset_name_base }}.deb.sig
+          mv "$DEB_DIR"/*.deb.sig "$APPIMAGE_DIR"/${{ matrix.asset_name_base }}.deb.sig || true
           
           echo "Final content of $APPIMAGE_DIR after moves"
           ls -R "$APPIMAGE_DIR" || true
@@ -428,7 +433,7 @@ jobs:
           # Benenne .exe um
           Move-Item -Path $ExeFile.FullName -Destination "$ARTIFACT_DIR\${{ matrix.asset_name_base }}.exe"
           # Benenne .exe.sig um
-          Move-Item -Path $SigFile.FullName -Destination "$ARTIFACT_DIR\${{ matrix.asset_name_base }}.exe.sig"
+          if ($SigFile) { Move-Item -Path $SigFile.FullName -Destination "$ARTIFACT_DIR\${{ matrix.asset_name_base }}.exe.sig" }
 
           echo "Final content of $ARTIFACT_DIR after move"
           Get-ChildItem -Path $ARTIFACT_DIR -Recurse
@@ -447,7 +452,7 @@ jobs:
           ls -R "${{ matrix.output_path }}" || true 
           echo "-----------------------------------"
           
-          APP_BASE_NAME="NoRisk Launcher" # Dein productName
+          APP_BASE_NAME="Mythos Launcher" # Dein productName
           ARTIFACT_DIR_DMG=${{ matrix.output_path }}/dmg
           ARTIFACT_DIR_APP=${{ matrix.output_path }}/macos
           RENAMED_DIR="$ARTIFACT_DIR_APP/renamed"
@@ -461,10 +466,10 @@ jobs:
           mv "$ARTIFACT_DIR_DMG"/*.dmg "$RENAMED_DIR"/${{ matrix.asset_name_base }}.dmg
           
           # Verschiebe App Tarball (expliziter Name)
-          mv "$ARTIFACT_DIR_APP/${APP_BASE_NAME}.app.tar.gz" "$RENAMED_DIR"/${{ matrix.asset_name_base }}.app.tar.gz
+          mv "$ARTIFACT_DIR_APP/${APP_BASE_NAME}.app.tar.gz" "$RENAMED_DIR"/${{ matrix.asset_name_base }}.app.tar.gz || true
           
           # Verschiebe App Tarball Signatur (expliziter Name, ignoriere Fehler)
-          mv "$ARTIFACT_DIR_APP/${APP_BASE_NAME}.app.tar.gz.sig" "$RENAMED_DIR"/${{ matrix.asset_name_base }}.app.tar.gz.sig
+          mv "$ARTIFACT_DIR_APP/${APP_BASE_NAME}.app.tar.gz.sig" "$RENAMED_DIR"/${{ matrix.asset_name_base }}.app.tar.gz.sig || true
           
           echo "Final content of $RENAMED_DIR after move"
           ls -R "$RENAMED_DIR" || true
