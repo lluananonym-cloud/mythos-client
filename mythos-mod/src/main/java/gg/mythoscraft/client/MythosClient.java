@@ -1,0 +1,167 @@
+package gg.mythoscraft.client;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class MythosClient implements ClientModInitializer {
+    public static final Logger LOG = LoggerFactory.getLogger("Mythos Client");
+    public static final Identifier ICON_FONT = Identifier.of("mythosclient", "icons");
+
+    /** Bekannte Spieler: UUID ohne Bindestriche -> Plus. Fehlt ein Eintrag, nutzt der Spieler kein Mythos Client. */
+    private static final Map<String, Boolean> PLAYERS = new ConcurrentHashMap<>();
+    private static final Map<String, Long> ASKED = new ConcurrentHashMap<>();
+
+    private static volatile String token;
+    private static volatile JsonObject profile;
+    private int ticks;
+
+    @Override
+    public void onInitializeClient() {
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> login(client));
+
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(
+                ClientCommandManager.literal("mcc")
+                        .executes(ctx -> {
+                            if (profile == null) {
+                                ctx.getSource().sendFeedback(prefix().append(Text.literal("Nicht angemeldet.").formatted(Formatting.RED)));
+                            } else {
+                                ctx.getSource().sendFeedback(prefix().append(Text.literal(
+                                        "Währung: " + coins() + (plus() ? " · Plus aktiv" : ""))));
+                            }
+                            return 1;
+                        })
+                        .then(ClientCommandManager.argument("anzahl", IntegerArgumentType.integer(1)).executes(ctx -> {
+                            int amount = IntegerArgumentType.getInteger(ctx, "anzahl");
+                            give(amount);
+                            return 1;
+                        }))));
+
+        HudRenderCallback.EVENT.register((ctx, tickCounter) -> {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc.options.hudHidden || mc.getDebugHud().shouldShowDebugHud()) return;
+            MutableText line = icon().append(Text.literal(" Mythos Client").formatted(Formatting.WHITE));
+            if (profile != null) {
+                if (plus()) line.append(Text.literal(" Plus").formatted(Formatting.GOLD));
+                line.append(Text.literal(" · " + coins() + " Coins").formatted(Formatting.YELLOW));
+            }
+            ctx.drawTextWithShadow(mc.textRenderer, line, 4, 4, 0xFFFFFF);
+        });
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.world == null || ++ticks % 100 != 0) return;
+            List<String> unknown = new ArrayList<>();
+            long now = System.currentTimeMillis();
+            for (AbstractClientPlayerEntity p : client.world.getPlayers()) {
+                String id = clean(p.getUuid());
+                Long last = ASKED.get(id);
+                if (!PLAYERS.containsKey(id) && (last == null || now - last > 60_000)) {
+                    unknown.add(id);
+                    ASKED.put(id, now);
+                }
+            }
+            if (unknown.isEmpty()) return;
+            MythosApi.players(unknown).thenAccept(res -> {
+                for (JsonElement el : res.getAsJsonArray("players")) {
+                    JsonObject o = el.getAsJsonObject();
+                    PLAYERS.put(o.get("uuid").getAsString(), o.get("plus").getAsBoolean());
+                }
+            }).exceptionally(e -> null);
+        });
+    }
+
+    private static void login(MinecraftClient client) {
+        UUID uuid = client.getSession().getUuidOrNull();
+        String accessToken = client.getSession().getAccessToken();
+        String username = client.getSession().getUsername();
+        if (uuid == null) return;
+        byte[] random = new byte[16];
+        new SecureRandom().nextBytes(random);
+        String serverId = HexFormat.of().formatHex(random);
+        Thread t = new Thread(() -> {
+            try {
+                client.getSessionService().joinServer(uuid, accessToken, serverId);
+                JsonObject res = MythosApi.session(username, serverId).join();
+                token = res.get("token").getAsString();
+                profile = res.getAsJsonObject("profile");
+                PLAYERS.put(clean(uuid), plus());
+                LOG.info("Angemeldet als {} (Plus: {})", username, plus());
+            } catch (Exception e) {
+                LOG.warn("Mythos-Anmeldung fehlgeschlagen: {}", e.getMessage());
+            }
+        }, "Mythos Login");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private static void give(int amount) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (token == null) {
+            chat(prefix().append(Text.literal("Nicht angemeldet.").formatted(Formatting.RED)));
+            return;
+        }
+        MythosApi.give(token, amount).thenAccept(res -> {
+            profile = res.getAsJsonObject("profile");
+            chat(prefix().append(Text.literal("+" + amount + " Coins. Jetzt: " + coins()).formatted(Formatting.GREEN)));
+        }).exceptionally(e -> {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            chat(prefix().append(Text.literal(cause.getMessage()).formatted(Formatting.RED)));
+            return null;
+        });
+    }
+
+    private static void chat(Text text) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        mc.execute(() -> mc.inGameHud.getChatHud().addMessage(text));
+    }
+
+    private static MutableText prefix() {
+        return icon().append(Text.literal(" [MCC] ").formatted(Formatting.AQUA));
+    }
+
+    public static MutableText icon() {
+        return Text.literal("").setStyle(Style.EMPTY.withFont(ICON_FONT).withColor(Formatting.WHITE));
+    }
+
+    /** null = kein Mythos-Client-Spieler, sonst ob er Plus hat. */
+    public static Boolean playerStatus(UUID uuid) {
+        return PLAYERS.get(clean(uuid));
+    }
+
+    private static boolean plus() {
+        JsonObject p = profile;
+        return p != null && p.get("plus").getAsBoolean();
+    }
+
+    private static long coins() {
+        JsonObject p = profile;
+        return p == null ? 0 : p.get("coins").getAsLong();
+    }
+
+    private static String clean(UUID uuid) {
+        return uuid.toString().replace("-", "");
+    }
+}
