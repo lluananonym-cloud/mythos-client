@@ -40,6 +40,13 @@ jobs:
           cat gradle.properties
       - id: gradle
         run: chmod +x gradlew && ./gradlew build --no-daemon
+      - name: Mixin-Ziele prüfen
+        run: |
+          JAR=$(find .gradle -name 'minecraft-merged-*.jar' | grep -iv sources | head -1)
+          check() { javap -p -cp "$JAR" "$1" | grep -q "$2" && echo "ok: $1 $2" || { echo "::error::fehlt: $1 $2"; exit 1; }; }
+          check net.minecraft.entity.player.PlayerEntity ' getDisplayName()'
+          check net.minecraft.client.network.AbstractClientPlayerEntity ' getSkin()'
+          check net.minecraft.client.option.SimpleOption ' value;'
       - name: Signaturen zeigen (nur bei Fehler)
         if: failure() && steps.gradle.outcome == 'failure'
         run: |
