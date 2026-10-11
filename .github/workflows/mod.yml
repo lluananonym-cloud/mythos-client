@@ -33,7 +33,7 @@ jobs:
           MC=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2)
           YARN=$(curl -fsS "https://meta.fabricmc.net/v2/versions/yarn/$MC" | jq -r '.[0].version')
           LOADER=$(curl -fsS https://meta.fabricmc.net/v2/versions/loader | jq -r '[.[] | select(.stable)][0].version')
-          LOOM=$(curl -fsS https://maven.fabricmc.net/net/fabricmc/fabric-loom/maven-metadata.xml | grep -o '<version>[0-9.]*</version>' | sed 's/<[^>]*>//g' | sort -V | tail -1)
+          LOOM=$(curl -fsS https://maven.fabricmc.net/net/fabricmc/fabric-loom/maven-metadata.xml | grep -o '<version>1\.14\.[0-9]*</version>' | sed 's/<[^>]*>//g' | sort -V | tail -1)  # Loom 1.14 passt zu 1.21.11 und Gradle 9.2
           API=$(curl -fsS https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml | grep -o "<version>[^<]*+$MC</version>" | sed 's/<[^>]*>//g' | sort -V | tail -1)
           echo "Minecraft $MC, yarn $YARN, loader $LOADER, loom $LOOM, fabric-api $API"
           sed -i "s/^yarn_mappings=.*/yarn_mappings=$YARN/; s/^loader_version=.*/loader_version=$LOADER/; s/^loom_version=.*/loom_version=$LOOM/; s/^fabric_version=.*/fabric_version=$API/" gradle.properties
