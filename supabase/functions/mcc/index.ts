@@ -10,6 +10,9 @@
 //   give { amount }                       -> { profile }                    (Token, nur Owner: /mcc <anzahl>)
 //   players { uuids: string[] }           -> { players: [{ uuid, name, plus }] }  (öffentlich, für Plus-Abzeichen)
 //   channel-stats { url }                 -> { platform, followers, name }  (öffentlich, live von YouTube/TikTok/Twitch/Instagram)
+//   creator-info                          -> { code, supporters, supporting }  (Token)
+//   creator-code { code }                 -> { code }                       (Token, nur Creator)
+//   support { code | null }               -> { supporting }                 (Token; Creator-Code eintragen)
 //   creator-apply { mcName, discord, platform, channelUrl, followers, message } -> { ok }
 //   cosmetics                             -> { cosmetics, equippedCape }    (öffentlich, Token optional)
 //   cosmetic-create { name, imageBase64, frames, frameTimeMs, plusOnly } -> { cosmetic }  (Token, nur Owner)
@@ -49,12 +52,13 @@ const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice
 
 type Player = {
   uuid: string; name: string; plus: boolean; coins: number; is_owner: boolean; creator: boolean;
-  equipped_cape: string | null;
+  equipped_cape: string | null; creator_code: string | null; supported_creator: string | null;
 };
 const publicProfile = (p: Player) => ({
   uuid: p.uuid, name: p.name, plus: p.plus, coins: p.coins, owner: p.is_owner, creator: p.creator || p.is_owner,
-  equippedCape: p.equipped_cape,
+  equippedCape: p.equipped_cape, creatorCode: p.creator || p.is_owner ? p.creator_code ?? p.name : null,
 });
+const CODE_RE = /^[A-Za-z0-9_]{3,16}$/;
 
 // ---- Live-Abonnenten für das Creator-Programm ----
 const BROWSER_HEADERS = {
@@ -225,6 +229,12 @@ async function session(db: ReturnType<typeof admin>, body: Record<string, unknow
     }
   }
 
+  // Creator ohne Code bekommen ihren Namen als Code (falls frei).
+  if ((player.creator || player.is_owner) && !player.creator_code) {
+    const { error } = await db.from("mcc_players").update({ creator_code: player.name }).eq("uuid", uuid);
+    if (!error) player = { ...player, creator_code: player.name };
+  }
+
   const token = randomToken();
   const expires = new Date(Date.now() + SESSION_DAYS * 86400_000).toISOString();
   const s = await db.from("mcc_sessions").insert({ token_hash: await sha256(token), player_uuid: uuid, expires_at: expires });
@@ -353,6 +363,57 @@ Deno.serve(async (req) => {
         } catch (e) {
           return json({ error: e instanceof Error ? e.message : "Abruf fehlgeschlagen" }, 422);
         }
+      }
+
+      case "creator-info": {
+        const p = await playerFromToken(db, req);
+        if (!p) return json({ error: "Nicht angemeldet" }, 401);
+        let supporters = 0;
+        if (p.creator || p.is_owner) {
+          const { count } = await db.from("mcc_players").select("uuid", { count: "exact", head: true })
+            .eq("supported_creator", p.uuid);
+          supporters = count ?? 0;
+        }
+        let supporting: { code: string; name: string } | null = null;
+        if (p.supported_creator) {
+          const { data: c } = await db.from("mcc_players").select("name, creator_code")
+            .eq("uuid", p.supported_creator).maybeSingle();
+          if (c) supporting = { code: (c.creator_code as string | null) ?? (c.name as string), name: c.name as string };
+        }
+        return json({ code: publicProfile(p).creatorCode, supporters, supporting });
+      }
+
+      case "creator-code": {
+        const p = await playerFromToken(db, req);
+        if (!p) return json({ error: "Nicht angemeldet" }, 401);
+        if (!p.creator && !p.is_owner) return json({ error: "Nur Creator haben einen Code" }, 403);
+        const code = str(body.code, 16);
+        if (!CODE_RE.test(code)) return json({ error: "Der Code braucht 3 bis 16 Zeichen: Buchstaben, Zahlen, _" }, 400);
+        const { error } = await db.from("mcc_players").update({ creator_code: code, updated_at: new Date().toISOString() })
+          .eq("uuid", p.uuid);
+        if (error?.code === "23505") return json({ error: "Diesen Code hat schon jemand" }, 409);
+        if (error) throw error;
+        return json({ code });
+      }
+
+      case "support": {
+        const p = await playerFromToken(db, req);
+        if (!p) return json({ error: "Nicht angemeldet" }, 401);
+        if (body.code === null || body.code === "") {
+          const { error } = await db.from("mcc_players").update({ supported_creator: null, supported_at: null }).eq("uuid", p.uuid);
+          if (error) throw error;
+          return json({ supporting: null });
+        }
+        const code = str(body.code, 16);
+        if (!CODE_RE.test(code)) return json({ error: "Ungültiger Creator-Code" }, 400);
+        const { data: c } = await db.from("mcc_players").select("uuid, name, creator_code, creator, is_owner")
+          .ilike("creator_code", code.replace(/_/g, "\\_")).maybeSingle();
+        if (!c || !(c.creator || c.is_owner)) return json({ error: "Diesen Creator-Code gibt es nicht" }, 404);
+        if (c.uuid === p.uuid) return json({ error: "Deinen eigenen Code kannst du nicht eintragen" }, 400);
+        const { error } = await db.from("mcc_players")
+          .update({ supported_creator: c.uuid, supported_at: new Date().toISOString() }).eq("uuid", p.uuid);
+        if (error) throw error;
+        return json({ supporting: { code: c.creator_code as string, name: c.name as string } });
       }
 
       case "creator-apply": {

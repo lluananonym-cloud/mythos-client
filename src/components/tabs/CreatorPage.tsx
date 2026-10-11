@@ -5,7 +5,11 @@ import { TabHeader } from "../ui/TabHeader";
 import { useMinecraftAuthStore } from "../../store/minecraft-auth-store";
 import {
   fetchChannelStats,
+  getCreatorInfo,
   getMythosProfile,
+  setCreatorCode,
+  supportCreator,
+  type CreatorInfo,
   mythosErrorText,
   submitCreatorApplication,
   type MythosProfile,
@@ -32,11 +36,113 @@ function detectPlatform(url: string): string | null {
   return null;
 }
 
+/** Eigener Code für Creator: anzeigen, kopieren, ändern; dazu die Zahl der Unterstützer. */
+function CreatorCodeCard({ info, onChange }: { info: CreatorInfo; onChange: (info: CreatorInfo) => void }) {
+  const [draft, setDraft] = useState(info.code ?? "");
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setDraft(info.code ?? ""), [info.code]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const code = await setCreatorCode(draft.trim());
+      onChange({ ...info, code });
+      toast.success("Creator-Code gespeichert");
+    } catch (e) {
+      toast.error(mythosErrorText(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-white/15 bg-black/30 p-5 flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="font-minecraft-ten text-sm text-white/60">Dein Creator-Code</p>
+          <p className="font-minecraft-ten text-3xl text-purple-300">{info.code}</p>
+        </div>
+        <div className="text-right">
+          <p className="font-minecraft-ten text-sm text-white/60">Unterstützer</p>
+          <p className="font-minecraft-ten text-3xl">{info.supporters.toLocaleString("de-DE")}</p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <input className={FIELD} value={draft} maxLength={16} onChange={(e) => setDraft(e.target.value)} />
+        <Button size="sm" onClick={save} disabled={saving || !draft.trim() || draft.trim() === info.code}>
+          {saving ? "Speichert..." : "Ändern"}
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => {
+            void navigator.clipboard.writeText(info.code ?? "");
+            toast.success("Code kopiert");
+          }}
+        >
+          Kopieren
+        </Button>
+      </div>
+      <p className="font-minecraft-ten text-xs text-white/50">
+        Spieler tragen deinen Code im Launcher unter Creator ein und unterstützen dich damit.
+      </p>
+    </div>
+  );
+}
+
+/** Für alle Spieler: einen Creator-Code eintragen, um einen Creator zu unterstützen. */
+function SupportCard({ info, onChange }: { info: CreatorInfo; onChange: (info: CreatorInfo) => void }) {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const apply = async (value: string | null) => {
+    setBusy(true);
+    try {
+      const supporting = await supportCreator(value);
+      onChange({ ...info, supporting });
+      setCode("");
+      toast.success(supporting ? `Du unterstützt jetzt ${supporting.name}` : "Creator-Code entfernt");
+    } catch (e) {
+      toast.error(mythosErrorText(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-white/15 bg-black/30 p-5 flex flex-col gap-3">
+      <p className="font-minecraft-ten text-lg">Creator unterstützen</p>
+      {info.supporting ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-minecraft-ten text-sm text-white/80">
+            Du unterstützt <span className="text-purple-300">{info.supporting.name}</span> (Code {info.supporting.code})
+          </p>
+          <Button size="sm" onClick={() => void apply(null)} disabled={busy}>Entfernen</Button>
+        </div>
+      ) : (
+        <p className="font-minecraft-ten text-sm text-white/60">Trag den Code deines Lieblings-Creators ein.</p>
+      )}
+      <div className="flex gap-2">
+        <input
+          className={FIELD}
+          placeholder="Creator-Code"
+          value={code}
+          maxLength={16}
+          onChange={(e) => setCode(e.target.value)}
+        />
+        <Button size="sm" onClick={() => void apply(code.trim())} disabled={busy || !code.trim()}>
+          Eintragen
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /** Creator-Programm: Bewerbung (landet in mcc_creator_applications) bzw. Status für Creator. */
 export function CreatorPage() {
   const activeAccount = useMinecraftAuthStore((s) => s.activeAccount);
   const [profile, setProfile] = useState<MythosProfile | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [creatorInfo, setCreatorInfo] = useState<CreatorInfo | null>(null);
   const [mcName, setMcName] = useState(activeAccount?.minecraft_username ?? "");
   const [discord, setDiscord] = useState("");
   const [platform, setPlatform] = useState(PLATFORMS[0]);
@@ -54,6 +160,7 @@ export function CreatorPage() {
       .then((p) => {
         setProfile(p);
         setMcName((n) => n || p.name);
+        return getCreatorInfo().then(setCreatorInfo);
       })
       .catch((e) => setProfileError(mythosErrorText(e)));
   }, []);
@@ -128,14 +235,18 @@ export function CreatorPage() {
               {profileError}
             </p>
           )}
+          {creatorInfo && <SupportCard info={creatorInfo} onChange={setCreatorInfo} />}
           {profile?.creator ? (
-            <div className="rounded-lg border border-purple-400/50 bg-purple-500/15 p-5 flex flex-col gap-2">
-              <p className="font-minecraft-ten text-2xl">Du bist Mythos Creator</p>
-              <p className="font-minecraft-ten text-sm text-white/70">
-                {profile.name}
-                {profile.owner ? " · Owner" : ""} · {profile.coins} Coins{profile.plus ? " · Plus" : ""}
-              </p>
-            </div>
+            <>
+              <div className="rounded-lg border border-purple-400/50 bg-purple-500/15 p-5 flex flex-col gap-2">
+                <p className="font-minecraft-ten text-2xl">Du bist Mythos Creator</p>
+                <p className="font-minecraft-ten text-sm text-white/70">
+                  {profile.name}
+                  {profile.owner ? " · Owner" : ""} · {profile.coins} Coins{profile.plus ? " · Plus" : ""}
+                </p>
+              </div>
+              {creatorInfo?.code && <CreatorCodeCard info={creatorInfo} onChange={setCreatorInfo} />}
+            </>
           ) : sent ? (
             <p className="font-minecraft-ten text-lg">Danke! Wir melden uns über Discord bei dir.</p>
           ) : (

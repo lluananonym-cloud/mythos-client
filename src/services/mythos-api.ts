@@ -8,6 +8,7 @@ export interface MythosProfile {
   coins: number;
   owner: boolean;
   creator: boolean;
+  creatorCode: string | null;
   equippedCape: string | null;
 }
 
@@ -66,6 +67,30 @@ export const submitCreatorApplication = (application: CreatorApplication) =>
 /** Holt die Abonnenten/Follower eines Kanals live (YouTube, TikTok, Twitch). */
 export const fetchChannelStats = (url: string) =>
   call<{ platform: string; followers: number; name: string | null }>("channel-stats", { url });
+
+export interface CreatorInfo {
+  code: string | null;
+  supporters: number;
+  supporting: { code: string; name: string } | null;
+}
+
+export async function getCreatorInfo(): Promise<CreatorInfo> {
+  const s = await mythosLogin();
+  return call<CreatorInfo>("creator-info", {}, s.token);
+}
+
+export async function setCreatorCode(code: string): Promise<string> {
+  const s = await mythosLogin();
+  const res = await call<{ code: string }>("creator-code", { code }, s.token);
+  return res.code;
+}
+
+/** Creator-Code eintragen (null = keinen Creator mehr unterstützen). */
+export async function supportCreator(code: string | null): Promise<CreatorInfo["supporting"]> {
+  const s = await mythosLogin();
+  const res = await call<{ supporting: CreatorInfo["supporting"] }>("support", { code }, s.token);
+  return res.supporting;
+}
 
 /** Eigenes Mythos-Profil (meldet bei Bedarf an). */
 export async function getMythosProfile(): Promise<MythosProfile> {
