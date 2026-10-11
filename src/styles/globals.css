@@ -10,6 +10,15 @@
     font-display: swap;
 }
 
+/* Mythos: Outfit (SIL Open Font License 1.1, siehe /fonts/OFL-Outfit.txt) */
+@font-face {
+    font-family: "Outfit";
+    src: url("/fonts/outfit.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 @font-face {
     font-family: "MinecraftTen";
     src: url("/fonts/minecraft.woff2") format("woff2");
@@ -48,9 +57,9 @@
     --radius-lg: 12px;
     --radius-xl: 16px;
     --radius-2xl: 24px;
-    --border-radius: 0px; 
-    --font-smallcaps: "SmallCaps", monospace;
-    --font-minecraft: "MinecraftTen", sans-serif;
+    --border-radius: 12px;
+    --font-smallcaps: "Outfit", system-ui, sans-serif;
+    --font-minecraft: "Outfit", system-ui, sans-serif;
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.2);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.25);

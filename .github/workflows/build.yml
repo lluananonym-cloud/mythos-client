@@ -45,7 +45,7 @@ jobs:
   # --- JOB 0b: compile the macOS 26 app icon ---
   # actool only understands Icon Composer .icon documents when it comes from
   # Xcode 26, which macos-latest does not carry yet. Compiling here keeps
-  # NoRiskLauncher.icon as the single source of truth and keeps the rest of the
+  # MythosLauncher.icon as the single source of truth and keeps the rest of the
   # matrix on macos-latest.
   macos-icon:
     needs: test
@@ -59,7 +59,7 @@ jobs:
       # The very script contributors run locally, so the two can never drift.
       # It finds its own Xcode 26, verifies the catalog carries the bolt, and
       # writes src-tauri/Assets.car over the committed copy.
-      - name: Compile Assets.car from NoRiskLauncher.icon
+      - name: Compile Assets.car from MythosLauncher.icon
         run: bash src-tauri/icons/build-macos-icon.sh
 
       - name: Upload the compiled catalog
@@ -90,6 +90,20 @@ jobs:
             echo "::warning::Kein eigener Mythos-Server gefunden, der Launcher nutzt die Fallback-Adresse."
           fi
 
+  # --- Mythos: Lizenz der privaten NoRisk-Pakete anzeigen (für die Veröffentlichung) ---
+  deps-license:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Lizenz von @noriskclient/nrc-skin-renderer
+        run: |
+          REG=https://nexus.norisk.gg/repository/npm/
+          npm view @noriskclient/nrc-skin-renderer@0.10.1 name version license repository homepage --registry "$REG" || true
+          mkdir -p /tmp/p && cd /tmp/p && npm pack @noriskclient/nrc-skin-renderer@0.10.1 --registry "$REG" >/dev/null 2>&1 || true
+          ls /tmp/p; tar -tzf /tmp/p/*.tgz 2>/dev/null | grep -i -E 'licen|readme|package.json' || true
+          tar -xzf /tmp/p/*.tgz -C /tmp/p 2>/dev/null && { head -40 /tmp/p/package/LICENSE* 2>/dev/null; grep -i -A2 '"license' /tmp/p/package/package.json; head -30 /tmp/p/package/README* 2>/dev/null; } || true
+
   # --- JOB 1: Build & Rename ---
   build:
     needs: [test, macos-icon, server-url]
@@ -100,19 +114,19 @@ jobs:
           - platform: 'macos-latest'
             target: aarch64-apple-darwin
             output_path: ./src-tauri/target/aarch64-apple-darwin/release/bundle
-            asset_name_base: NoRiskClient-MacOS-arm64
+            asset_name_base: MythosLauncher-MacOS-arm64
           - platform: 'macos-latest'
             target: x86_64-apple-darwin
             output_path: ./src-tauri/target/x86_64-apple-darwin/release/bundle
-            asset_name_base: NoRiskClient-MacOS-x86_64
+            asset_name_base: MythosLauncher-MacOS-x86_64
           - platform: 'ubuntu-22.04'
             target: '' # Kein explizites Target für Linux x86_64
             output_path: ./src-tauri/target/release/bundle
-            asset_name_base: NoRiskClient-Linux
+            asset_name_base: MythosLauncher-Linux
           - platform: 'windows-latest'
             target: '' # Kein explizites Target für Windows x86_64
             output_path: ./src-tauri/target/release/bundle
-            asset_name_base: NoRiskClient-Windows-setup
+            asset_name_base: MythosLauncher-Windows-setup
 
     runs-on: ${{ matrix.platform }}
     # The environment exists to give the GitHub OIDC token a stable subject
@@ -126,15 +140,15 @@ jobs:
       id-token: write # Azure OIDC login for Artifact Signing
     env:
       MYTHOS_API_URL: ${{ needs.server-url.outputs.url }}
-      WINDOWS_LAUNCHER_EXE: ${{ github.workspace }}\src-tauri\target\release\noriskclient-launcher-v3.exe
+      WINDOWS_LAUNCHER_EXE: ${{ github.workspace }}\src-tauri\target\release\mythos-launcher.exe
       WINDOWS_CAPTURE_EXE: ${{ github.workspace }}\src-tauri\binaries\norisk-capture-x86_64-pc-windows-msvc.exe
-      CAPTURE_RUNTIME_ASSET: NoRiskClient-Windows-capture-runtime.zip
+      CAPTURE_RUNTIME_ASSET: MythosLauncher-Windows-capture-runtime.zip
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       # Replaces the committed placeholder with the catalog built from
-      # NoRiskLauncher.icon, so the shipped icon always matches the .icon source.
+      # MythosLauncher.icon, so the shipped icon always matches the .icon source.
       - name: Fetch the compiled macOS icon catalog
         if: matrix.platform == 'macos-latest'
         uses: actions/download-artifact@v4
@@ -567,30 +581,3 @@ jobs:
           # Setze auf true, wenn der Tag '-alpha', '-beta' oder '-rc' enthält
           prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
           files: artifacts/**/* # Lädt alle heruntergeladenen Artefakte hoch
-
-      # --- Schritt: Produktions-Backend benachrichtigen --- 
-      - name: Notify Production Backend
-        if: success() # Nur wenn Release-Erstellung erfolgreich war
-        run: |
-          echo "Sending notification to PRODUCTION backend for tag ${{ github.ref_name }}"
-          curl -X POST \
-               -H "Content-Type: application/json" \
-               -H "Authorization: Bearer ${{ secrets.BACKEND_API_KEY }}" \
-               https://api.norisk.gg/api/v1/launcher/releases/update
-        shell: bash
-
-  # --- JOB 3: Staging-Backend benachrichtigen ---
-  notify_staging: # Neuer Job für Staging/Manual
-    # Läuft bei Push zu staging ODER bei manuellem Start
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/staging') || (github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
-    needs: build # Stellt sicher, dass Builds abgeschlossen sind (oder fehlgeschlagen sind)
-    steps:
-      - name: Notify Staging Backend
-        run: |
-          echo "Sending notification to STAGING backend for ref ${{ github.ref_name }}"
-          curl -X POST \
-               -H "Content-Type: application/json" \
-               -H "Authorization: Bearer ${{ secrets.BACKEND_API_KEY }}" \
-               https://api-staging.norisk.gg/api/v1/launcher/releases/update
-        shell: bash

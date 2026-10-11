@@ -1,4 +1,4 @@
-use noriskclient_launcher_v3_lib::integrations::provenance::*;
+use mythos_launcher_lib::integrations::provenance::*;
 
 fn names(values: &[&str]) -> Vec<String> {
     values.iter().map(|v| v.to_string()).collect()

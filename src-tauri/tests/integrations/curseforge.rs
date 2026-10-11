@@ -1,5 +1,5 @@
-use noriskclient_launcher_v3_lib::integrations::curseforge::*;
-use noriskclient_launcher_v3_lib::state::profile_state::ModLoader;
+use mythos_launcher_lib::integrations::curseforge::*;
+use mythos_launcher_lib::state::profile_state::ModLoader;
 
 #[test]
 fn extracts_plain_loader_versions() {

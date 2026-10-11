@@ -1,5 +1,5 @@
-use noriskclient_launcher_v3_lib::sync::model::MergeFormat;
-use noriskclient_launcher_v3_lib::sync::options_format::*;
+use mythos_launcher_lib::sync::model::MergeFormat;
+use mythos_launcher_lib::sync::options_format::*;
 
 const MC: char = ':';
 

@@ -1,5 +1,5 @@
-use noriskclient_launcher_v3_lib::state::profile_state::ModLoader;
-use noriskclient_launcher_v3_lib::sync::subscribers::*;
+use mythos_launcher_lib::state::profile_state::ModLoader;
+use mythos_launcher_lib::sync::subscribers::*;
 
 fn ctx(version: &str, loader: ModLoader) -> (String, ModLoader) {
     (version.to_string(), loader)

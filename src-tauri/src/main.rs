@@ -4,8 +4,8 @@
     windows_subsystem = "windows"
 )]
 
-use noriskclient_launcher_v3_lib::*;
-use noriskclient_launcher_v3_lib::{cli, commands, logging, state, utils};
+use mythos_launcher_lib::*;
+use mythos_launcher_lib::{cli, commands, logging, state, utils};
 
 use log::{error, info, trace};
 use std::sync::Arc;

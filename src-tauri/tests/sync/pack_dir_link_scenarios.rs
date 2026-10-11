@@ -1,5 +1,5 @@
 use crate::harness::*;
-use noriskclient_launcher_v3_lib::sync::model::{AdoptStrategy, DetachMode, SyncTargetKind};
+use mythos_launcher_lib::sync::model::{AdoptStrategy, DetachMode, SyncTargetKind};
 use std::path::Path;
 
 const TARGET: &str = "saves";

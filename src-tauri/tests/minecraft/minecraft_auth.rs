@@ -1,5 +1,5 @@
-use noriskclient_launcher_v3_lib::error::AppError;
-use noriskclient_launcher_v3_lib::minecraft::auth::minecraft_auth::*;
+use mythos_launcher_lib::error::AppError;
+use mythos_launcher_lib::minecraft::auth::minecraft_auth::*;
 use reqwest::StatusCode;
 
 fn deserialize_failure(status: StatusCode) -> AppError {

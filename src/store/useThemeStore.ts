@@ -209,7 +209,7 @@ const calculateColorVariants = (baseColor: string): Partial<AccentColor> => {
   };
 };
 
-export const DEFAULT_BORDER_RADIUS = 0;
+export const DEFAULT_BORDER_RADIUS = 12;
 export const MIN_BORDER_RADIUS = 0;
 export const MAX_BORDER_RADIUS = 32;
 
@@ -570,6 +570,12 @@ export const useThemeStore = create<ThemeState>()(
       },
     }),    {
       name: "norisk-theme-storage",
+      // Mythos: einmalig runde Ecken und Mythos-Farbe (NoRisk nutzt eckige Kanten).
+      version: 2,
+      migrate: (state, version) =>
+        version < 2
+          ? { ...(state as object), borderRadius: DEFAULT_BORDER_RADIUS, accentColor: ACCENT_COLORS.mythos, mythosThemeApplied: true }
+          : state,
       onRehydrateStorage: () => (state) => {
         if (state) {
           // Migration: Replace old "none" grouping criterion with "group"

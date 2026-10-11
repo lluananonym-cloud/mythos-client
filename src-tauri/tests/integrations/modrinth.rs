@@ -1,4 +1,4 @@
-use noriskclient_launcher_v3_lib::integrations::modrinth::*;
+use mythos_launcher_lib::integrations::modrinth::*;
 
 #[test]
 fn reads_ids_from_a_cdn_link() {

@@ -1,7 +1,7 @@
-use noriskclient_launcher_v3_lib::state::db;
-use noriskclient_launcher_v3_lib::state::profile_state::{Mod, ModSource};
-use noriskclient_launcher_v3_lib::state::sync_pack_state::SyncPackManager;
-use noriskclient_launcher_v3_lib::sync::model::{
+use mythos_launcher_lib::state::db;
+use mythos_launcher_lib::state::profile_state::{Mod, ModSource};
+use mythos_launcher_lib::state::sync_pack_state::SyncPackManager;
+use mythos_launcher_lib::sync::model::{
     AdoptStrategy, SyncTarget, SyncTargetKind, SyncTargetState, VersionOverride,
 };
 use std::path::PathBuf;

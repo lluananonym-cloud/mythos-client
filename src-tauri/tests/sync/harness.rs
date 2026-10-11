@@ -1,16 +1,16 @@
 use chrono::Utc;
-use noriskclient_launcher_v3_lib::state::db;
-use noriskclient_launcher_v3_lib::state::profile_state::{
+use mythos_launcher_lib::state::db;
+use mythos_launcher_lib::state::profile_state::{
     ModLoader, Profile, ProfileSettings, ProfileState,
 };
-use noriskclient_launcher_v3_lib::state::sync_pack_state::SyncPackManager;
-use noriskclient_launcher_v3_lib::sync::context::SyncContext;
-use noriskclient_launcher_v3_lib::sync::handlers::dir_link::DirLinkHandler;
-use noriskclient_launcher_v3_lib::sync::handlers::file_copy::FileCopyHandler;
-use noriskclient_launcher_v3_lib::sync::handlers::options_merge::OptionsMergeHandler;
-use noriskclient_launcher_v3_lib::sync::handlers::SyncHandler;
-use noriskclient_launcher_v3_lib::sync::model::{DetachMode, SyncPack, SyncTarget, SyncTargetKind};
-use noriskclient_launcher_v3_lib::sync::report::HandlerOutcome;
+use mythos_launcher_lib::state::sync_pack_state::SyncPackManager;
+use mythos_launcher_lib::sync::context::SyncContext;
+use mythos_launcher_lib::sync::handlers::dir_link::DirLinkHandler;
+use mythos_launcher_lib::sync::handlers::file_copy::FileCopyHandler;
+use mythos_launcher_lib::sync::handlers::options_merge::OptionsMergeHandler;
+use mythos_launcher_lib::sync::handlers::SyncHandler;
+use mythos_launcher_lib::sync::model::{DetachMode, SyncPack, SyncTarget, SyncTargetKind};
+use mythos_launcher_lib::sync::report::HandlerOutcome;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -126,7 +126,7 @@ impl Shared {
     pub async fn try_launch(
         &self,
         player: &Player,
-    ) -> noriskclient_launcher_v3_lib::error::Result<HandlerOutcome> {
+    ) -> mythos_launcher_lib::error::Result<HandlerOutcome> {
         self.handler()
             .apply_pre_launch(&self.context(player, &[], &HashSet::new()))
             .await

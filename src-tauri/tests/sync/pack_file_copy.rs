@@ -1,5 +1,5 @@
 use crate::harness::*;
-use noriskclient_launcher_v3_lib::sync::model::{DetachMode, SyncTargetKind};
+use mythos_launcher_lib::sync::model::{DetachMode, SyncTargetKind};
 
 const TARGET: &str = "servers.dat";
 

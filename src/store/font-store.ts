@@ -51,6 +51,9 @@ export const useFontStore = create<FontState>()(
     }),
     {
       name: "norisk-font-storage",
+      // Mythos: einmalig auf die Mythos-Schrift umstellen.
+      version: 1,
+      migrate: (state, version) => (version < 1 ? { ...(state as object), fontId: DEFAULT_FONT_ID } : state),
       onRehydrateStorage: () => (state) => {
         state?.applyFontToDOM();
       },

@@ -1,5 +1,5 @@
-use noriskclient_launcher_v3_lib::minecraft::api::cosmetic_pack_api::merge_settings;
-use noriskclient_launcher_v3_lib::minecraft::dto::cosmetic_outfit::{CosmeticSettings, Vector3f};
+use mythos_launcher_lib::minecraft::api::cosmetic_pack_api::merge_settings;
+use mythos_launcher_lib::minecraft::dto::cosmetic_outfit::{CosmeticSettings, Vector3f};
 use serde_json::{json, Value};
 
 fn meta() -> Value {

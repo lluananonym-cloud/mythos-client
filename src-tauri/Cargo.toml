@@ -1,10 +1,10 @@
 [package]
-name = "noriskclient-launcher-v3"
+name = "mythos-launcher"
 version = "0.6.28"
-description = "A Tauri App"
-authors = ["NoRiskk"]
+description = "Mythos Launcher – Minecraft-Launcher von Mythoscraft (Fork des NoRisk Client Launchers, GPL-3.0)"
+authors = ["MinePro641 (Mythoscraft)", "NoRisk (Original-Launcher)"]
 edition = "2021"
-default-run = "noriskclient-launcher-v3"
+default-run = "mythos-launcher"
 
 [workspace]
 members = ["crates/norisk-ipc", "crates/norisk-logging", "crates/norisk-capture"]
@@ -18,14 +18,14 @@ opt-level = 3
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "noriskclient_launcher_v3_lib"
+name = "mythos_launcher_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [[bin]]
-name = "noriskclient-launcher-v3"
+name = "mythos-launcher"
 path = "src/main.rs"
 
 [dependencies]

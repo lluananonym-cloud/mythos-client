@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compile NoRiskLauncher.icon into src-tauri/Assets.car.
+# Compile MythosLauncher.icon into src-tauri/Assets.car.
 #
 # The macos-icon job in build.yml runs this exact script on every build, so
 # releases always match the .icon source and CI cannot drift from what you get
@@ -69,7 +69,7 @@ echo "Using $DEV (Xcode $(xcode_version "$DEV"))"
 out="$(mktemp -d)"
 trap 'rm -rf "$out"' EXIT
 
-xcrun actool icons/NoRiskLauncher.icon \
+xcrun actool icons/MythosLauncher.icon \
   --compile "$out" \
   --app-icon NoRiskLauncher \
   --include-all-app-icons \
@@ -84,6 +84,6 @@ xcrun actool icons/NoRiskLauncher.icon \
 # grep -q exits on the first match and breaks the pipe, which pipefail treats
 # as a failure, so run the two separately.
 strings "$out/Assets.car" > "$out/strings.txt"
-grep -q 'norisk-bolt' "$out/strings.txt"
+grep -q 'mythos-logo' "$out/strings.txt"
 cp "$out/Assets.car" Assets.car
 echo "Wrote src-tauri/Assets.car ($(wc -c < Assets.car | tr -d ' ') bytes)"

@@ -7,6 +7,13 @@ export interface FontPreset {
 }
 
 export const FONT_PRESETS: Record<string, FontPreset> = {
+  mythos: {
+    id: "mythos",
+    name: "Mythos",
+    smallcaps: '"Outfit", system-ui, sans-serif',
+    minecraft: '"Outfit", system-ui, sans-serif',
+    preview: '"Outfit", system-ui, sans-serif',
+  },
   minecraft: {
     id: "minecraft",
     name: "Minecraft",
@@ -30,4 +37,4 @@ export const FONT_PRESETS: Record<string, FontPreset> = {
   },
 };
 
-export const DEFAULT_FONT_ID = "minecraft";
+export const DEFAULT_FONT_ID = "mythos";

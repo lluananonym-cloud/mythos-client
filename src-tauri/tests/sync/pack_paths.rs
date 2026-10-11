@@ -1,5 +1,5 @@
-use noriskclient_launcher_v3_lib::sync::model::{AdoptStrategy, SyncTargetKind};
-use noriskclient_launcher_v3_lib::sync::paths;
+use mythos_launcher_lib::sync::model::{AdoptStrategy, SyncTargetKind};
+use mythos_launcher_lib::sync::paths;
 use std::path::Path;
 use uuid::Uuid;
 

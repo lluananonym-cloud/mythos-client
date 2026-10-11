@@ -1,4 +1,4 @@
-use noriskclient_launcher_v3_lib::integrations::norisk_packs::LoaderStrategy;
+use mythos_launcher_lib::integrations::norisk_packs::LoaderStrategy;
 use serde_json::Value;
 
 #[test]

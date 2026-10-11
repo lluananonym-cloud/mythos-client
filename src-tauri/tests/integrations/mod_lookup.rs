@@ -1,4 +1,4 @@
-use noriskclient_launcher_v3_lib::integrations::mod_lookup::*;
+use mythos_launcher_lib::integrations::mod_lookup::*;
 
 #[test]
 fn duplicates_are_only_looked_up_once() {

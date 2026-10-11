@@ -1,4 +1,4 @@
-use noriskclient_launcher_v3_lib::integrations::lenient::*;
+use mythos_launcher_lib::integrations::lenient::*;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, PartialEq)]

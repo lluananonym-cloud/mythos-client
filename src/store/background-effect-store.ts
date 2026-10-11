@@ -36,7 +36,7 @@ interface BackgroundEffectState {
 export const useBackgroundEffectStore = create<BackgroundEffectState>()(
   persist(
     (set) => ({
-      currentEffect: BACKGROUND_EFFECTS.RETRO_GRID,
+      currentEffect: BACKGROUND_EFFECTS.NEBULA_WAVES,
       customMediaUrl: null,
       customMediaType: null,
       customMediaOpacity: 0.25,
@@ -54,6 +54,10 @@ export const useBackgroundEffectStore = create<BackgroundEffectState>()(
     }),
     {
       name: "norisk-background-effect-storage",
+      // Mythos: einmalig auf den Mythos-Hintergrund umstellen.
+      version: 1,
+      migrate: (state, version) =>
+        version < 1 ? { ...(state as object), currentEffect: BACKGROUND_EFFECTS.NEBULA_WAVES } : state,
     },
   ),
 );

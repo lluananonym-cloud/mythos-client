@@ -1,5 +1,5 @@
-use noriskclient_launcher_v3_lib::state::profile_state::Profile;
-use noriskclient_launcher_v3_lib::utils::import_safety::*;
+use mythos_launcher_lib::state::profile_state::Profile;
+use mythos_launcher_lib::utils::import_safety::*;
 use std::path::PathBuf;
 
 #[test]

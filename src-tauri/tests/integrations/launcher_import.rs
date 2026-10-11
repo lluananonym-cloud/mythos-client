@@ -1,15 +1,15 @@
-use noriskclient_launcher_v3_lib::integrations::launcher_import::adapter::LauncherAdapter;
-use noriskclient_launcher_v3_lib::integrations::launcher_import::adapters::{
+use mythos_launcher_lib::integrations::launcher_import::adapter::LauncherAdapter;
+use mythos_launcher_lib::integrations::launcher_import::adapters::{
     atlauncher::AtLauncherAdapter, curseforge_app::CurseForgeAppAdapter, mmc::MmcAdapter,
     modrinth_app::ModrinthAppAdapter,
 };
-use noriskclient_launcher_v3_lib::integrations::launcher_import::cfg::{decode_text, CfgFile};
-use noriskclient_launcher_v3_lib::integrations::launcher_import::copy;
-use noriskclient_launcher_v3_lib::integrations::launcher_import::detect;
-use noriskclient_launcher_v3_lib::integrations::launcher_import::loader_map;
-use noriskclient_launcher_v3_lib::integrations::launcher_import::model::*;
-use noriskclient_launcher_v3_lib::integrations::launcher_import::resolve;
-use noriskclient_launcher_v3_lib::state::profile_state::{Mod, ModLoader, ModSource};
+use mythos_launcher_lib::integrations::launcher_import::cfg::{decode_text, CfgFile};
+use mythos_launcher_lib::integrations::launcher_import::copy;
+use mythos_launcher_lib::integrations::launcher_import::detect;
+use mythos_launcher_lib::integrations::launcher_import::loader_map;
+use mythos_launcher_lib::integrations::launcher_import::model::*;
+use mythos_launcher_lib::integrations::launcher_import::resolve;
+use mythos_launcher_lib::state::profile_state::{Mod, ModLoader, ModSource};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
 use tempfile::TempDir;
@@ -139,7 +139,7 @@ fn a_utf8_bom_is_stripped() {
 async fn a_missing_config_reads_as_empty() {
     let dir = TempDir::new().unwrap();
 
-    let cfg = noriskclient_launcher_v3_lib::integrations::launcher_import::cfg::read_cfg(
+    let cfg = mythos_launcher_lib::integrations::launcher_import::cfg::read_cfg(
         &dir.path().join("nope.cfg"),
     )
     .await
@@ -155,7 +155,7 @@ async fn an_oversized_config_is_refused() {
     write(&path, &"x=1\n".repeat(600_000));
 
     let result =
-        noriskclient_launcher_v3_lib::integrations::launcher_import::cfg::read_cfg(&path).await;
+        mythos_launcher_lib::integrations::launcher_import::cfg::read_cfg(&path).await;
 
     assert!(result.is_err());
 }
@@ -441,7 +441,7 @@ async fn java_settings_of_a_foreign_instance_are_recorded_not_adopted() {
     assert!(instance.untrusted_jvm_args.is_some());
 
     let report =
-        noriskclient_launcher_v3_lib::integrations::launcher_import::preview::security_report_for(
+        mythos_launcher_lib::integrations::launcher_import::preview::security_report_for(
             &instance,
         );
     assert!(report.stripped_java_path.is_some());

@@ -1,20 +1,22 @@
-# Mythos Client
+# Mythos Launcher / Mythos Client
 
-Mythos Client ist ein Fork des [NoRisk Client Launchers](https://github.com/NoRiskClient/noriskclient-launcher)
-(GPL-3.0). Lizenz und Copyright-Hinweise der Originalautoren bleiben erhalten; dieser Fork steht ebenfalls unter der GPL-3.0.
+Der Mythos Launcher ist ein Fork des [NoRisk Client Launchers](https://github.com/NoRiskClient/noriskclient-launcher)
+(GPL-3.0) von Mythoscraft (MinePro641). Lizenz und Copyright-Hinweise der Originalautoren bleiben erhalten;
+dieser Fork steht ebenfalls unter der [GPL-3.0](LICENSE). Was geändert wurde, steht in [NOTICE.md](NOTICE.md).
 
-- `src/`, `src-tauri/`: der Launcher (Tauri, React, Rust), umbenannt auf Mythos, mit Creator-Bewerbung (Tab "Creator").
-- `mythos-mod/`: eigene Fabric-Mod (Minecraft 1.21.4) mit Mythos-Logo neben dem Namen, Plus, Währung und `/mcc`.
-- Backend: Supabase Edge Function `mcc` im Repo `ai-mythoscraft`.
+- `src/`, `src-tauri/`: der Launcher (Tauri, React, Rust), umbenannt auf Mythos, mit Cosmetics, Creator-Programm und Creator-Codes.
+- `mythos-mod/`: eigene Fabric-Mod (Minecraft 1.21.11) mit Mythos-Logo neben dem Namen, Plus, Währung, Capes und `/mcc`.
+- `supabase/`: Mythos-Server (Edge Function `mcc` und Datenbank), wird von `.github/workflows/server.yml` bereitgestellt.
 
-NoRisk-Logos, -Bilder und die Marke "NoRisk" sind nicht Teil der GPL und wurden ersetzt.
-Updates von NoRisks Servern sind abgeschaltet (`MYTHOS_UPDATES_DISABLED`).
+"NoRisk" und die NoRisk-Logos sind Marken von NoRisk und nicht Teil der GPL; sie wurden ersetzt.
+Mythos Client ist kein offizielles Produkt von NoRisk und steht in keiner Verbindung zu NoRisk.
+Fehler bitte als [Issue in diesem Repository](https://github.com/lluananonym-cloud/mythos-client/issues) melden.
 
 ---
 
 ## Issues
 
-If you notice any bugs or missing features, you can let us know by opening an issue [here](https://norisk.gg/issues).
+If you notice any bugs or missing features, please open an issue [here](https://github.com/lluananonym-cloud/mythos-client/issues).
 
 ## License
 This code is originally forked and still uses a small amount of code from [LiquidLauncher](https://github.com/CCBlueX/LiquidLauncher).
@@ -37,7 +39,7 @@ Do the above and share your source code with everyone; just like we do.
 ### Setup Instructions
 1. Clone the repository:
    ```bash
-   git clone --recurse-submodules https://github.com/NoRiskClient/noriskclient-launcher
+   git clone --recurse-submodules https://github.com/lluananonym-cloud/mythos-client
    cd noriskclient-launcher
    ```
 

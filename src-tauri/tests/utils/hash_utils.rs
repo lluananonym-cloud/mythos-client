@@ -1,4 +1,4 @@
-use noriskclient_launcher_v3_lib::utils::hash_utils::*;
+use mythos_launcher_lib::utils::hash_utils::*;
 
 #[test]
 fn matches_independent_murmur2_reference() {
