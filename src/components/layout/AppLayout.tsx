@@ -535,11 +535,17 @@ function HeaderBar({ minimizeRef, maximizeRef, closeRef }: HeaderBarProps) {
 
         <div className="flex flex-col items-start">
           <div className="flex items-center gap-3">
+            <img
+              src="/mythos_logo_color.png"
+              alt=""
+              className="w-9 h-9 drop-shadow-[0_0_10px_rgba(180,77,255,0.8)]"
+              data-tauri-drag-region
+            />
             <h1
-              className="font-smallcaps text-2xl tracking-wider font-bold text-shadow"
+              className="font-smallcaps text-2xl tracking-wider font-bold bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(180,77,255,0.6)]"
               data-tauri-drag-region
             >
-              NoRiskClient
+              Mythos Client
             </h1>
             {availableUpdate && (
               <Tooltip content={isUpdating ? t('header.update.tooltip_updating') : t('header.update.tooltip_available', { version: availableUpdate.version })}>

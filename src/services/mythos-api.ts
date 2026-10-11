@@ -9,6 +9,7 @@ export interface MythosProfile {
   plus: boolean;
   coins: number;
   owner: boolean;
+  creator: boolean;
   equippedCape: string | null;
 }
 
@@ -33,23 +34,30 @@ export interface CreatorApplication {
 
 let session: { token: string; profile: MythosProfile } | null = null;
 
+/** Macht aus Tauri-Fehlern ({ message }) und Error-Objekten einen lesbaren Text. */
+export function mythosErrorText(e: unknown): string {
+  const raw =
+    e instanceof Error ? e.message
+    : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message)
+    : String(e);
+  return raw.replace(/^Account error:\s*/, "");
+}
+
 async function call<T>(action: string, body: Record<string, unknown> = {}, token?: string): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(MYTHOS_API_URL, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ action, ...body }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error ?? `Fehler ${res.status}`);
-  return data as T;
+  try {
+    // Läuft über Rust (Command mythos_api), damit CORS im Webview keine Rolle spielt.
+    return await invoke<T>("mythos_api", { action, body, token: token ?? null });
+  } catch (e) {
+    throw new Error(mythosErrorText(e));
+  }
 }
 
 /** Meldet das aktive Minecraft-Konto beim Mythos-Backend an (einmal pro Launcher-Start). */
 export async function mythosLogin(force = false): Promise<{ token: string; profile: MythosProfile }> {
   if (session && !force) return session;
-  const res = await invoke<{ token: string; profile: MythosProfile }>("mythos_login");
+  const res = await invoke<{ token: string; profile: MythosProfile }>("mythos_login").catch((e) => {
+    throw new Error(mythosErrorText(e));
+  });
   session = { token: res.token, profile: res.profile };
   return session;
 }
@@ -57,11 +65,31 @@ export async function mythosLogin(force = false): Promise<{ token: string; profi
 export const submitCreatorApplication = (application: CreatorApplication) =>
   call<{ ok: true }>("creator-apply", { ...application });
 
-export async function listCosmetics(): Promise<{ cosmetics: MythosCosmetic[]; profile: MythosProfile | null }> {
-  const s = await mythosLogin().catch(() => null);
+/** Holt die Abonnenten/Follower eines Kanals live (YouTube, TikTok, Twitch). */
+export const fetchChannelStats = (url: string) =>
+  call<{ platform: string; followers: number; name: string | null }>("channel-stats", { url });
+
+/** Eigenes Mythos-Profil (meldet bei Bedarf an). */
+export async function getMythosProfile(): Promise<MythosProfile> {
+  const s = await mythosLogin();
+  const res = await call<{ profile: MythosProfile }>("profile", {}, s.token);
+  s.profile = res.profile;
+  return res.profile;
+}
+
+export async function listCosmetics(): Promise<{
+  cosmetics: MythosCosmetic[];
+  profile: MythosProfile | null;
+  loginError: string | null;
+}> {
+  let loginError: string | null = null;
+  const s = await mythosLogin().catch((e) => {
+    loginError = mythosErrorText(e);
+    return null;
+  });
   const res = await call<{ cosmetics: MythosCosmetic[]; profile: MythosProfile | null }>("cosmetics", {}, s?.token);
   if (s && res.profile) s.profile = res.profile;
-  return res;
+  return { ...res, loginError };
 }
 
 export async function equipCape(cosmeticId: string | null): Promise<MythosProfile> {

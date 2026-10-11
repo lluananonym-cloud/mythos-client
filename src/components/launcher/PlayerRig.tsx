@@ -12,7 +12,6 @@ import { isWebGLAvailable } from '@noriskclient/nrc-skin-renderer';
 import { useActiveSkinTexture } from '../../hooks/useActiveSkinTexture';
 import { useEquippedCosmetics } from '../../hooks/useEquippedCosmetics';
 import { useIdleEmote } from '../../hooks/useIdleEmote';
-import { useSelectedIcon } from '../../hooks/useSelectedIcon';
 import { useSkinPreview } from '../../hooks/useSkinPreview';
 import { useWindowFocus } from '../../hooks/useWindowFocus';
 import { useMinecraftAuthStore } from '../../store/minecraft-auth-store';
@@ -20,6 +19,7 @@ import { useQualitySettingsStore } from '../../store/quality-settings-store';
 import { useThemeStore } from '../../store/useThemeStore';
 
 const NO_ACCOUNT_SKIN_URL = "/skins/steve.png";
+const MYTHOS_NAMETAG_ICON = "/mythos_logo_color.png";
 const RIG_SHADOW = 'drop-shadow(5px 10px 5px rgba(0,0,0,0.75))';
 const NO_COSMETICS: SnapshotCosmetic[] = [];
 
@@ -79,7 +79,6 @@ export function PlayerRig({ playerName, outline }: PlayerRigProps) {
   const { textureUrl, variant, loading: skinLoading } = useActiveSkinTexture();
   const { cosmetics: equippedCosmetics, loading: cosmeticsLoading } =
     useEquippedCosmetics(activeAccount?.id);
-  const selectedIcon = useSelectedIcon(activeAccount?.id);
   const idleEmote = useIdleEmote();
   const wants3d = useQualitySettingsStore((s) => s.cosmeticRenderer3d);
   const webglOk = isWebGLAvailable();
@@ -105,11 +104,12 @@ export function PlayerRig({ playerName, outline }: PlayerRigProps) {
       playerName
         ? {
             text: playerName.toString(),
-            iconUrl: selectedIcon.url,
-            iconPlus: selectedIcon.plus,
+            // Mythos: immer das Mythoscraft-Logo neben dem Namen statt des NoRisk-Icons.
+            iconUrl: MYTHOS_NAMETAG_ICON,
+            iconPlus: false,
           }
         : null,
-    [playerName, selectedIcon.url, selectedIcon.plus],
+    [playerName],
   );
 
   const rigTextureUrl = hasAccount ? textureUrl : NO_ACCOUNT_SKIN_URL;

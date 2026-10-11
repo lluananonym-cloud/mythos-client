@@ -15,6 +15,15 @@ export type AccentColor = {
 };
 
 export const ACCENT_COLORS: Record<string, AccentColor> = {
+  // Mythos: Farbe aus dem Mythoscraft-Logo, Standard für alle.
+  mythos: {
+    name: "Mythos",
+    value: "#b44dff",
+    hoverValue: "#9d2fff",
+    shadowValue: "rgba(180, 77, 255, 0.55)",
+    light: "#d38cff",
+    dark: "#7a1fd1",
+  },
   cyan: {
     name: "Cyan",
     value: "#00B9E8",
@@ -208,6 +217,8 @@ let borderRadiusAnalyticsDebounceId: ReturnType<typeof setTimeout> | null = null
 
 interface ThemeState {
   accentColor: AccentColor;
+  /** Mythos: einmalig auf das Mythos-Design umgestellt (auch bei alten NoRisk-Einstellungen). */
+  mythosThemeApplied?: boolean;
   setAccentColor: (color: AccentColor) => void;
   setCustomAccentColor: (hexColor: string) => void;
   applyAccentColorToDOM: () => void;
@@ -276,7 +287,8 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      accentColor: ACCENT_COLORS.blue,
+      accentColor: ACCENT_COLORS.mythos,
+      mythosThemeApplied: true,
       isBackgroundAnimationEnabled: false,
       showNavLabels: true,
       isDetailViewSidebarOnLeft: true,
@@ -301,7 +313,7 @@ export const useThemeStore = create<ThemeState>()(
       // Featured HugoSMP card - defaults
       featureMode: false,
       // Language - defaults
-      language: "en" as SupportedLanguage,
+      language: "de" as SupportedLanguage,
       // Analytics consent state - defaults
       analyticsConsent: {
         hasSeenBanner: false,
@@ -565,6 +577,12 @@ export const useThemeStore = create<ThemeState>()(
             state.profileGroupingCriterion = "group";
           }
           
+          if (!state.mythosThemeApplied) {
+            state.accentColor = ACCENT_COLORS.mythos;
+            state.mythosThemeApplied = true;
+            setTimeout(() => useThemeStore.setState({ accentColor: ACCENT_COLORS.mythos, mythosThemeApplied: true }), 0);
+          }
+
           state.applyAccentColorToDOM();
           state.applyBorderRadiusToDOM();
           // Apply language on rehydrate

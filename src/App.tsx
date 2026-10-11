@@ -114,7 +114,7 @@ export function App() {
     if (storedTheme) {
       try {
         const themeData = JSON.parse(storedTheme);
-        if (themeData.state?.accentColor?.value) {
+        if (themeData.state?.mythosThemeApplied && themeData.state?.accentColor?.value) {
           root.style.setProperty("--accent", themeData.state.accentColor.value);
           root.style.setProperty(
               "--accent-hover",

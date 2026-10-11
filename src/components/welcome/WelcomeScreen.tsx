@@ -177,7 +177,7 @@ export function WelcomeScreen() {
             header uses. The painted logo asset is not the current brand. */}
         <div className="relative z-10" style={rise(60)}>
           <span className="font-smallcaps text-3xl tracking-wider font-bold text-white text-shadow">
-            NoRiskClient
+            Mythos Client
           </span>
         </div>
 

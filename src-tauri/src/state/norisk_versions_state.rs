@@ -19,6 +19,14 @@ use super::profile_state::Profile;
 const NORISK_VERSIONS_FILENAME: &str = "norisk_versions.json";
 
 /// Returns the path for the norisk versions config depending on experimental mode
+/// Mythos: Die Standardprofile kommen mit NoRisk-Namen ("NRC 1.21.11"); angezeigt werden sie als Mythos.
+pub fn mythos_profile_name(name: &str) -> String {
+    name.replace("NoRisk Client", "Mythos Client")
+        .replace("NoRiskClient", "Mythos Client")
+        .replace("NoRisk", "Mythos")
+        .replace("NRC", "MCC")
+}
+
 pub fn norisk_versions_path_for(is_experimental: bool) -> PathBuf {
     let filename = if is_experimental {
         "norisk_versions_exp.json"
@@ -156,7 +164,11 @@ impl NoriskVersionManager {
 
     /// Returns a clone of the entire current NoriskVersionsConfig.
     pub async fn get_config(&self) -> NoriskVersionsConfig {
-        self.config.read().await.clone()
+        let mut config = self.config.read().await.clone();
+        for profile in &mut config.profiles {
+            profile.name = mythos_profile_name(&profile.name);
+        }
+        config
     }
 
     /// Updates the entire configuration and saves it to the file.
@@ -182,7 +194,10 @@ impl NoriskVersionManager {
     /// Returns a standard profile by ID if found
     pub async fn get_profile_by_id(&self, id: Uuid) -> Option<Profile> {
         let config = self.config.read().await;
-        config.profiles.iter().find(|p| p.id == id).cloned()
+        config.profiles.iter().find(|p| p.id == id).cloned().map(|mut p| {
+            p.name = mythos_profile_name(&p.name);
+            p
+        })
     }
 
     // Add more specific accessor methods if needed, e.g.:

@@ -32,20 +32,49 @@ pub async fn mythos_login() -> Result<Value, CommandError> {
         )
         .await?;
 
-    let response = HTTP_CLIENT
-        .post(MYTHOS_API_URL)
-        .json(&json!({ "action": "session", "username": account.username, "serverId": server_id }))
-        .send()
-        .await
-        .map_err(AppError::MinecraftApi)?;
-    let status = response.status();
-    let body: Value = response.json().await.map_err(AppError::MinecraftApi)?;
-    if !status.is_success() {
-        let message = body
-            .get("error")
-            .and_then(Value::as_str)
-            .unwrap_or("Mythos-Anmeldung fehlgeschlagen");
-        return Err(AppError::AccountError(message.to_string()).into());
+    post(json!({ "action": "session", "username": account.username, "serverId": server_id }), None).await
+}
+
+/// Ruft eine Aktion der Edge Function auf. Läuft über Rust statt fetch im Webview,
+/// damit CORS und CSP keine Rolle spielen.
+#[tauri::command]
+pub async fn mythos_api(
+    action: String,
+    body: Option<Value>,
+    token: Option<String>,
+) -> Result<Value, CommandError> {
+    let mut payload = match body {
+        Some(Value::Object(map)) => Value::Object(map),
+        _ => json!({}),
+    };
+    payload["action"] = Value::String(action);
+    post(payload, token).await
+}
+
+async fn post(payload: Value, token: Option<String>) -> Result<Value, CommandError> {
+    let mut request = HTTP_CLIENT.post(MYTHOS_API_URL).json(&payload);
+    if let Some(token) = token {
+        request = request.bearer_auth(token);
     }
-    Ok(body)
+    let response = request.send().await.map_err(|e| {
+        AppError::AccountError(format!("Mythos-Server nicht erreichbar ({})", e))
+    })?;
+    let status = response.status();
+    let text = response.text().await.unwrap_or_default();
+    let body: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
+    if status.is_success() {
+        return Ok(body);
+    }
+    let message = match body.get("error").and_then(Value::as_str) {
+        Some(m) => m.to_string(),
+        None if status.as_u16() == 404 => {
+            "Mythos-Server ist noch nicht online: die Edge Function \"mcc\" ist nicht deployt".to_string()
+        }
+        None => body
+            .get("message")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .unwrap_or_else(|| format!("Mythos-Server antwortet mit Fehler {}", status.as_u16())),
+    };
+    Err(AppError::AccountError(message).into())
 }

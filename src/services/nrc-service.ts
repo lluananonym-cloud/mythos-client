@@ -23,9 +23,27 @@ import { logInfo, logError } from '../utils/logging-utils';
  * @throws If the backend command fails.
  */
 export const fetchNewsAndChangelogs = (): Promise<BlogPost[]> => {
-  // Directly invoke and return the promise. Errors will propagate to the caller.
-  return invoke('get_news_and_changelogs_command');
+  // Mythos: eigene News statt dem NoRisk-Blog.
+  return Promise.resolve(MYTHOS_NEWS);
 };
+
+const mythosPost = (id: number, date: string, title: string, description: string, image: string, url: string): BlogPost => ({
+  id,
+  date,
+  yoast_head_json: {
+    title,
+    description,
+    og_description: description,
+    og_url: url,
+    og_image: [{ url: image, type: 'image/jpeg' }],
+  },
+} as BlogPost);
+
+const MYTHOS_NEWS: BlogPost[] = [
+  mythosPost(3, '2026-10-11T12:00:00', 'Willkommen im Mythos Client', 'Der neue Launcher von Mythoscraft mit allen Features, Mythos Plus und eigener Währung.', '/news/welcome.jpg', 'https://mythos-core-ai.lovable.app/'),
+  mythosPost(2, '2026-10-11T11:00:00', 'Cosmetics', 'Capes selbst erstellen, auch animiert. Im Tab Cosmetics anlegen und ausrüsten.', '/news/cosmetics.jpg', 'https://mythos-core-ai.lovable.app/'),
+  mythosPost(1, '2026-10-11T10:00:00', 'Creator Programm', 'Bewirb dich direkt im Launcher. Deine Abonnenten werden live abgerufen.', '/news/creator.jpg', 'https://mythos-core-ai.lovable.app/'),
+];
 
 /**
  * Triggers a refresh of the Norisk packs configuration from the backend.

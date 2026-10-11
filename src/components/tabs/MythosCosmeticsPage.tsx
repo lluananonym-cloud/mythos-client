@@ -239,14 +239,17 @@ export function MythosCosmeticsPage() {
   const [profile, setProfile] = useState<MythosProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await listCosmetics();
       setCosmetics(res.cosmetics);
       setProfile(res.profile);
+      setProblem(res.loginError);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      setProblem(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
@@ -289,10 +292,12 @@ export function MythosCosmeticsPage() {
             {profile.name} · {profile.coins} Coins{profile.plus ? " · Plus" : ""}
           </p>
         )}
-        {!profile && !loading && (
-          <p className="font-minecraft-ten text-sm text-yellow-300">
-            Melde dich mit deinem Minecraft-Konto an, um Capes anzulegen.
-          </p>
+        {loading && <p className="font-minecraft-ten text-sm text-white/60">Lade Cosmetics...</p>}
+        {!loading && problem && (
+          <div className="flex items-center gap-3 rounded-lg border border-red-400/40 bg-red-500/10 p-3">
+            <p className="font-minecraft-ten text-sm text-red-300 flex-1">{problem}</p>
+            <Button size="sm" onClick={() => void load()}>Nochmal</Button>
+          </div>
         )}
         {profile?.owner && <CapeEditor onCreated={load} />}
         <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">

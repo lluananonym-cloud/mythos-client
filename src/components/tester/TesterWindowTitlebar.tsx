@@ -29,7 +29,7 @@ export function TesterWindowTitlebar({ remaining }: TesterWindowTitlebarProps) {
           className="font-minecraft text-xs tracking-wider"
           style={{ color: accentColor.value }}
         >
-          NoRisk Tester Queue
+          Mythos Tester Queue
         </span>
         {remaining > 0 && (
           <span
