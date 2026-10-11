@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "mythosclient",
+  "version": "${version}",
+  "name": "Mythos Client",
+  "description": "Mythos Client: Plus, Mythos-Währung und das Mythoscraft-Logo neben dem Namen.",
+  "authors": ["MinePro641"],
+  "contact": { "homepage": "https://github.com/lluananonym-cloud/mythos-client" },
+  "license": "GPL-3.0",
+  "icon": "assets/mythosclient/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["gg.mythoscraft.client.MythosClient"]
+  },
+  "mixins": ["mythosclient.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.17.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
