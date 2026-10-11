@@ -2,7 +2,7 @@ name: Mythos Client Mod
 
 on:
   push:
-    paths: ["mythos-mod/**", ".github/workflows/mod.yml"]
+    paths: ["mythos-mod/**", ".github/workflows/mod.yml", "supabase/**"]
   pull_request:
     paths: ["mythos-mod/**", ".github/workflows/mod.yml"]
   workflow_dispatch:
@@ -20,6 +20,14 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v4
+      - name: Adresse des Mythos-Servers eintragen
+        working-directory: .
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && REF=$(.github/scripts/mythos-server.sh ref); then
+            echo "api.url=https://$REF.supabase.co/functions/v1/mcc" > mythos-mod/src/main/resources/mythos.properties
+          fi
       - run: chmod +x gradlew && ./gradlew build --no-daemon
       - uses: actions/upload-artifact@v4
         with:

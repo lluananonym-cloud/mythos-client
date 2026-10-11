@@ -14,10 +14,26 @@ import java.util.concurrent.CompletableFuture;
 
 /** Spricht mit dem Mythos-Backend (Supabase Edge Function "mcc"). */
 public final class MythosApi {
-    public static final String URL = "https://rdxaqiacoitzeowehdts.supabase.co/functions/v1/mcc";
+    /** Fallback, falls beim Build kein eigener Mythos-Server eingetragen wurde. */
+    private static final String FALLBACK_URL = "https://rdxaqiacoitzeowehdts.supabase.co/functions/v1/mcc";
+    /** Der CI-Build schreibt die Adresse des eigenen Servers in mythos.properties. */
+    public static final String URL = loadUrl();
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
     private MythosApi() {}
+
+    private static String loadUrl() {
+        try (java.io.InputStream in = MythosApi.class.getResourceAsStream("/mythos.properties")) {
+            if (in != null) {
+                java.util.Properties props = new java.util.Properties();
+                props.load(in);
+                String url = props.getProperty("api.url", "").trim();
+                if (!url.isEmpty()) return url;
+            }
+        } catch (java.io.IOException ignored) {
+        }
+        return FALLBACK_URL;
+    }
 
     public static CompletableFuture<JsonObject> call(String action, JsonObject body, String token) {
         body.addProperty("action", action);

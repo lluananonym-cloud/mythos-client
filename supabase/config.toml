@@ -1,0 +1,6 @@
+# Eigenes Supabase-Projekt für den Mythos Client (unabhängig von der Website/Lovable).
+# Wird von .github/workflows/server.yml automatisch bereitgestellt.
+project_id = "mythos-client"
+
+[functions.mcc]
+verify_jwt = false

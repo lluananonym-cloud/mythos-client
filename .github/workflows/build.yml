@@ -65,9 +65,29 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # --- Mythos: Adresse des eigenen Servers (leer = Fallback im Code) ---
+  server-url:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      url: ${{ steps.url.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: url
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && REF=$(.github/scripts/mythos-server.sh ref); then
+            echo "url=https://$REF.supabase.co/functions/v1/mcc" >> "$GITHUB_OUTPUT"
+            echo "Mythos-Server: https://$REF.supabase.co/functions/v1/mcc"
+          else
+            echo "::warning::Kein eigener Mythos-Server gefunden, der Launcher nutzt die Fallback-Adresse."
+          fi
+
   # --- JOB 1: Build & Rename ---
   build:
-    needs: [test, macos-icon]
+    needs: [test, macos-icon, server-url]
     strategy:
       fail-fast: false
       matrix:
@@ -100,6 +120,7 @@ jobs:
       contents: read
       id-token: write # Azure OIDC login for Artifact Signing
     env:
+      MYTHOS_API_URL: ${{ needs.server-url.outputs.url }}
       WINDOWS_LAUNCHER_EXE: ${{ github.workspace }}\src-tauri\target\release\noriskclient-launcher-v3.exe
       WINDOWS_CAPTURE_EXE: ${{ github.workspace }}\src-tauri\binaries\norisk-capture-x86_64-pc-windows-msvc.exe
       CAPTURE_RUNTIME_ASSET: NoRiskClient-Windows-capture-runtime.zip

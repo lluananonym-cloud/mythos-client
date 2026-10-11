@@ -1,8 +1,6 @@
 // Mythos-Backend (Supabase Edge Function "mcc"): Plus, Währung, Cosmetics und Creator-Bewerbungen.
 import { invoke } from "@tauri-apps/api/core";
 
-export const MYTHOS_API_URL = "https://rdxaqiacoitzeowehdts.supabase.co/functions/v1/mcc";
-
 export interface MythosProfile {
   uuid: string;
   name: string;

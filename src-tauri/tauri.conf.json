@@ -221,7 +221,7 @@
           "https://*.modrinth.com",
           "https://sessionserver.mojang.com",
           "https://*.norisk.gg",
-        "https://rdxaqiacoitzeowehdts.supabase.co"
+          "https://*.supabase.co"
         ],
         "img-src": [
           "'self'",
@@ -254,7 +254,7 @@
           "https://avatars.githubusercontent.com",
           "https://pixelmonmod.com",
           "https://avatars.cloudhaven.gg",
-        "https://rdxaqiacoitzeowehdts.supabase.co"
+          "https://*.supabase.co"
         ],
         "style-src": [
           "'self'",

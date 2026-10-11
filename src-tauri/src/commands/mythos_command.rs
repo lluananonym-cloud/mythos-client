@@ -6,7 +6,16 @@ use crate::state::state_manager::State;
 use rand::RngCore;
 use serde_json::{json, Value};
 
-pub const MYTHOS_API_URL: &str = "https://rdxaqiacoitzeowehdts.supabase.co/functions/v1/mcc";
+/// Fallback, falls beim Build kein eigener Mythos-Server gefunden wurde (Supabase der Website).
+const FALLBACK_API_URL: &str = "https://rdxaqiacoitzeowehdts.supabase.co/functions/v1/mcc";
+
+/// Adresse der Edge Function; der CI-Build setzt MYTHOS_API_URL auf das eigene Supabase-Projekt.
+fn api_url() -> &'static str {
+    match option_env!("MYTHOS_API_URL") {
+        Some(url) if !url.is_empty() => url,
+        _ => FALLBACK_API_URL,
+    }
+}
 
 /// Meldet das aktive Minecraft-Konto beim Mythos-Backend an, ohne Passwort:
 /// joinServer bei Mojang mit zufälliger serverId, das Backend prüft das per hasJoined.
@@ -52,7 +61,7 @@ pub async fn mythos_api(
 }
 
 async fn post(payload: Value, token: Option<String>) -> Result<Value, CommandError> {
-    let mut request = HTTP_CLIENT.post(MYTHOS_API_URL).json(&payload);
+    let mut request = HTTP_CLIENT.post(api_url()).json(&payload);
     if let Some(token) = token {
         request = request.bearer_auth(token);
     }
