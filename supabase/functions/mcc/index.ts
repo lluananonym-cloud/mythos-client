@@ -10,13 +10,14 @@
 //   give { amount }                       -> { profile }                    (Token, nur Owner: /mcc <anzahl>)
 //   players { uuids: string[] }           -> { players: [{ uuid, name, plus }] }  (öffentlich, für Plus-Abzeichen)
 //   channel-stats { url }                 -> { platform, followers, name }  (öffentlich, live von YouTube/TikTok/Twitch/Instagram)
-//   creator-info                          -> { code, supporters, supporting }  (Token)
+//   creator-info                          -> { code, supporters, purchases, supporting }  (Token)
 //   creator-code { code }                 -> { code }                       (Token, nur Creator)
 //   support { code | null }               -> { supporting }                 (Token; Creator-Code eintragen)
 //   creator-apply { mcName, discord, platform, channelUrl, followers, message } -> { ok }
 //   cosmetics                             -> { cosmetics, equippedCape }    (öffentlich, Token optional)
 //   cosmetic-create { name, imageBase64, frames, frameTimeMs, plusOnly } -> { cosmetic }  (Token, nur Owner)
 //   cosmetic-delete { id }                -> { ok }                          (Token, nur Owner)
+//   buy { cosmeticId }                    -> { profile, owned }             (Token; Coins abziehen, Creator-Code zählt)
 //   equip { cosmeticId | null }           -> { profile }                    (Token)
 //
 // Capes: PNG, Breite ein Vielfaches von 64, pro Bild Breite:Höhe = 2:1. Animierte Capes sind
@@ -151,14 +152,19 @@ async function channelStats(rawUrl: string): Promise<{ platform: string; followe
 
 type Cosmetic = {
   id: string; name: string; type: string; texture_path: string; frames: number; frame_time_ms: number;
-  plus_only: boolean;
+  plus_only: boolean; price: number;
 };
 const textureUrl = (path: string) => `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/${BUCKET}/${path}`;
 const publicCosmetic = (c: Cosmetic) => ({
   id: c.id, name: c.name, type: c.type, url: textureUrl(c.texture_path), frames: c.frames,
-  frameTimeMs: c.frame_time_ms, plusOnly: c.plus_only,
+  frameTimeMs: c.frame_time_ms, plusOnly: c.plus_only, price: Number(c.price ?? 0),
 });
-const COSMETIC_COLUMNS = "id, name, type, texture_path, frames, frame_time_ms, plus_only";
+const COSMETIC_COLUMNS = "id, name, type, texture_path, frames, frame_time_ms, plus_only, price";
+
+async function ownedIds(db: ReturnType<typeof admin>, uuid: string): Promise<string[]> {
+  const { data } = await db.from("mcc_cosmetic_owned").select("cosmetic_id").eq("player_uuid", uuid);
+  return (data ?? []).map((r) => r.cosmetic_id as string);
+}
 
 /** Liest Breite und Höhe aus dem PNG-Kopf (IHDR), ohne das Bild zu dekodieren. */
 function pngSize(bytes: Uint8Array): { width: number; height: number } | null {
@@ -295,6 +301,7 @@ Deno.serve(async (req) => {
           cosmetics: (data as Cosmetic[]).map(publicCosmetic),
           equippedCape: p?.equipped_cape ?? null,
           profile: p ? publicProfile(p) : null,
+          owned: p ? await ownedIds(db, p.uuid) : [],
         });
       }
 
@@ -305,6 +312,8 @@ Deno.serve(async (req) => {
         const name = str(body.name, 40);
         const frames = Math.floor(Number(body.frames) || 1);
         const frameTimeMs = Math.floor(Number(body.frameTimeMs) || 100);
+        const price = Math.floor(Number(body.price) || 0);
+        if (price < 0 || price > MAX_GIVE) return json({ error: `Preis: 0 bis ${MAX_GIVE} Coins` }, 400);
         if (!name) return json({ error: "Name fehlt" }, 400);
         if (frames < 1 || frames > 64) return json({ error: "Bilder: 1 bis 64" }, 400);
         if (frameTimeMs < 20 || frameTimeMs > 5000) return json({ error: "Bildzeit: 20 bis 5000 ms" }, 400);
@@ -324,7 +333,7 @@ Deno.serve(async (req) => {
         if (up.error) throw up.error;
         const ins = await db.from("mcc_cosmetics").insert({
           id, name, type: "cape", texture_path: path, frames, frame_time_ms: frameTimeMs,
-          plus_only: body.plusOnly === true, created_by: p.uuid,
+          plus_only: body.plusOnly === true, created_by: p.uuid, price,
         }).select(COSMETIC_COLUMNS).single();
         if (ins.error) throw ins.error;
         return json({ cosmetic: publicCosmetic(ins.data as Cosmetic) });
@@ -340,14 +349,35 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
 
+      case "buy": {
+        const p = await playerFromToken(db, req);
+        if (!p) return json({ error: "Nicht angemeldet" }, 401);
+        const id = str(body.cosmeticId, 64);
+        const { data: c } = await db.from("mcc_cosmetics").select("active, plus_only").eq("id", id).maybeSingle();
+        if (!c?.active) return json({ error: "Dieses Cosmetic gibt es nicht" }, 404);
+        if (c.plus_only && !p.plus) return json({ error: "Dieses Cosmetic gibt es nur mit Plus" }, 403);
+        const { data: coins, error } = await db.rpc("mcc_buy_cosmetic", { _uuid: p.uuid, _cosmetic: id });
+        if (error) {
+          const msg = String(error.message ?? "");
+          if (msg.includes("MCC_OWNED")) return json({ error: "Das gehört dir schon" }, 409);
+          if (msg.includes("MCC_NO_COINS")) return json({ error: "Nicht genug Coins" }, 402);
+          if (msg.includes("MCC_NOT_FOUND")) return json({ error: "Dieses Cosmetic gibt es nicht" }, 404);
+          throw error;
+        }
+        return json({ profile: publicProfile({ ...p, coins: coins as number }), owned: await ownedIds(db, p.uuid) });
+      }
+
       case "equip": {
         const p = await playerFromToken(db, req);
         if (!p) return json({ error: "Nicht angemeldet" }, 401);
         const id = body.cosmeticId == null ? null : str(body.cosmeticId, 64);
         if (id) {
-          const { data: c } = await db.from("mcc_cosmetics").select("active, plus_only").eq("id", id).maybeSingle();
+          const { data: c } = await db.from("mcc_cosmetics").select("active, plus_only, price").eq("id", id).maybeSingle();
           if (!c?.active) return json({ error: "Dieses Cosmetic gibt es nicht" }, 404);
           if (c.plus_only && !p.plus) return json({ error: "Dieses Cosmetic gibt es nur mit Plus" }, 403);
+          if (Number(c.price) > 0 && !p.is_owner && !(await ownedIds(db, p.uuid)).includes(id)) {
+            return json({ error: "Kauf das Cosmetic zuerst im Shop" }, 403);
+          }
         }
         const { error } = await db.from("mcc_players")
           .update({ equipped_cape: id, updated_at: new Date().toISOString() }).eq("uuid", p.uuid);
@@ -369,10 +399,14 @@ Deno.serve(async (req) => {
         const p = await playerFromToken(db, req);
         if (!p) return json({ error: "Nicht angemeldet" }, 401);
         let supporters = 0;
+        let purchases = 0;
         if (p.creator || p.is_owner) {
           const { count } = await db.from("mcc_players").select("uuid", { count: "exact", head: true })
             .eq("supported_creator", p.uuid);
           supporters = count ?? 0;
+          const { count: bought } = await db.from("mcc_cosmetic_owned").select("player_uuid", { count: "exact", head: true })
+            .eq("creator_uuid", p.uuid).gt("price", 0);
+          purchases = bought ?? 0;
         }
         let supporting: { code: string; name: string } | null = null;
         if (p.supported_creator) {
@@ -380,7 +414,7 @@ Deno.serve(async (req) => {
             .eq("uuid", p.supported_creator).maybeSingle();
           if (c) supporting = { code: (c.creator_code as string | null) ?? (c.name as string), name: c.name as string };
         }
-        return json({ code: publicProfile(p).creatorCode, supporters, supporting });
+        return json({ code: publicProfile(p).creatorCode, supporters, purchases, supporting });
       }
 
       case "creator-code": {
