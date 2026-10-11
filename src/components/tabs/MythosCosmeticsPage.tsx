@@ -4,6 +4,7 @@ import { Button } from "../ui/buttons/Button";
 import { Input } from "../ui/Input";
 import { TabHeader } from "../ui/TabHeader";
 import {
+  buyCosmetic,
   createCape,
   deleteCosmetic,
   equipCape,
@@ -128,6 +129,7 @@ function CapeEditor({ onCreated }: { onCreated: () => void }) {
   const [frames, setFrames] = useState(8);
   const [frameTimeMs, setFrameTimeMs] = useState(100);
   const [plusOnly, setPlusOnly] = useState(false);
+  const [price, setPrice] = useState(0);
   const [image, setImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -158,7 +160,7 @@ function CapeEditor({ onCreated }: { onCreated: () => void }) {
     if (!image) return;
     setSaving(true);
     try {
-      await createCape({ name: name.trim(), imageBase64: image, frames: effectiveFrames, frameTimeMs, plusOnly });
+      await createCape({ name: name.trim(), imageBase64: image, frames: effectiveFrames, frameTimeMs, plusOnly, price });
       toast.success("Cape erstellt!");
       setName("");
       onCreated();
@@ -217,6 +219,13 @@ function CapeEditor({ onCreated }: { onCreated: () => void }) {
             <input type="range" min={20} max={1000} step={10} value={frameTimeMs} onChange={(e) => setFrameTimeMs(Number(e.target.value))} />
           </label>
         )}
+        <Input
+          label="Preis in Coins (0 = gratis)"
+          type="number"
+          min={0}
+          value={String(price)}
+          onChange={(e) => setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+        />
         <label className="flex items-center gap-2 font-minecraft-ten text-sm">
           <input type="checkbox" checked={plusOnly} onChange={(e) => setPlusOnly(e.target.checked)} /> Nur für Plus
         </label>
@@ -237,6 +246,7 @@ function CapeEditor({ onCreated }: { onCreated: () => void }) {
 export function MythosCosmeticsPage() {
   const [cosmetics, setCosmetics] = useState<MythosCosmetic[]>([]);
   const [profile, setProfile] = useState<MythosProfile | null>(null);
+  const [owned, setOwned] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -247,6 +257,7 @@ export function MythosCosmeticsPage() {
       const res = await listCosmetics();
       setCosmetics(res.cosmetics);
       setProfile(res.profile);
+      setOwned(res.owned);
       setProblem(res.loginError);
     } catch (e) {
       setProblem(e instanceof Error ? e.message : String(e));
@@ -264,6 +275,20 @@ export function MythosCosmeticsPage() {
     try {
       setProfile(await equipCape(id));
       toast.success(id ? "Cape angelegt. Im Spiel siehst du es nach dem nächsten Start." : "Cape abgelegt.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const buy = async (c: MythosCosmetic) => {
+    setBusy(c.id);
+    try {
+      const res = await buyCosmetic(c.id);
+      setProfile(res.profile);
+      setOwned(res.owned);
+      toast.success(`${c.name} gekauft!`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
@@ -304,18 +329,32 @@ export function MythosCosmeticsPage() {
           {cosmetics.map((c) => {
             const equipped = profile?.equippedCape === c.id;
             const locked = c.plusOnly && !profile?.plus;
+            const mustBuy = c.price > 0 && !owned.includes(c.id) && !profile?.owner;
             return (
               <div key={c.id} className={`flex flex-col items-center gap-2 p-3 rounded-lg border ${equipped ? "border-purple-400" : "border-white/10"} bg-black/20`}>
                 <CapePreview src={c.url} frames={c.frames} frameTimeMs={c.frameTimeMs} />
                 <span className="font-minecraft text-xl lowercase text-center">{c.name}</span>
                 {c.plusOnly && <span className="font-minecraft-ten text-xs text-yellow-300">Plus</span>}
-                <Button
-                  size="sm"
-                  disabled={!profile || locked || busy !== null}
-                  onClick={() => equip(equipped ? null : c.id)}
-                >
-                  {equipped ? "Ablegen" : locked ? "Nur Plus" : "Anlegen"}
-                </Button>
+                <span className="font-minecraft-ten text-xs text-white/70">
+                  {c.price > 0 ? (owned.includes(c.id) ? "Gekauft" : `${c.price} Coins`) : "Gratis"}
+                </span>
+                {mustBuy && !locked ? (
+                  <Button
+                    size="sm"
+                    disabled={!profile || busy !== null || (profile?.coins ?? 0) < c.price}
+                    onClick={() => buy(c)}
+                  >
+                    {(profile?.coins ?? 0) < c.price ? "Zu wenig Coins" : "Kaufen"}
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    disabled={!profile || locked || busy !== null}
+                    onClick={() => equip(equipped ? null : c.id)}
+                  >
+                    {equipped ? "Ablegen" : locked ? "Nur Plus" : "Anlegen"}
+                  </Button>
+                )}
                 {profile?.owner && (
                   <Button size="sm" variant="destructive" disabled={busy !== null} onClick={() => remove(c.id)}>
                     Löschen

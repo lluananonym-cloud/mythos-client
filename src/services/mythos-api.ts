@@ -20,6 +20,7 @@ export interface MythosCosmetic {
   frames: number;
   frameTimeMs: number;
   plusOnly: boolean;
+  price: number;
 }
 
 export interface CreatorApplication {
@@ -71,6 +72,7 @@ export const fetchChannelStats = (url: string) =>
 export interface CreatorInfo {
   code: string | null;
   supporters: number;
+  purchases?: number;
   supporting: { code: string; name: string } | null;
 }
 
@@ -103,6 +105,7 @@ export async function getMythosProfile(): Promise<MythosProfile> {
 export async function listCosmetics(): Promise<{
   cosmetics: MythosCosmetic[];
   profile: MythosProfile | null;
+  owned: string[];
   loginError: string | null;
 }> {
   let loginError: string | null = null;
@@ -110,9 +113,10 @@ export async function listCosmetics(): Promise<{
     loginError = mythosErrorText(e);
     return null;
   });
-  const res = await call<{ cosmetics: MythosCosmetic[]; profile: MythosProfile | null }>("cosmetics", {}, s?.token);
+  const res = await call<{ cosmetics: MythosCosmetic[]; profile: MythosProfile | null; owned?: string[] }>(
+    "cosmetics", {}, s?.token);
   if (s && res.profile) s.profile = res.profile;
-  return { ...res, loginError };
+  return { ...res, owned: res.owned ?? [], loginError };
 }
 
 export async function equipCape(cosmeticId: string | null): Promise<MythosProfile> {
@@ -122,12 +126,21 @@ export async function equipCape(cosmeticId: string | null): Promise<MythosProfil
   return res.profile;
 }
 
+/** Cosmetic mit Coins kaufen; der eingetragene Creator-Code zählt beim Kauf. */
+export async function buyCosmetic(cosmeticId: string): Promise<{ profile: MythosProfile; owned: string[] }> {
+  const s = await mythosLogin();
+  const res = await call<{ profile: MythosProfile; owned: string[] }>("buy", { cosmeticId }, s.token);
+  s.profile = res.profile;
+  return res;
+}
+
 export async function createCape(input: {
   name: string;
   imageBase64: string;
   frames: number;
   frameTimeMs: number;
   plusOnly: boolean;
+  price: number;
 }): Promise<MythosCosmetic> {
   const s = await mythosLogin();
   const res = await call<{ cosmetic: MythosCosmetic }>("cosmetic-create", input, s.token);

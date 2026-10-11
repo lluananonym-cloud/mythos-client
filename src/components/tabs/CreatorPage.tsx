@@ -66,6 +66,10 @@ function CreatorCodeCard({ info, onChange }: { info: CreatorInfo; onChange: (inf
           <p className="font-minecraft-ten text-sm text-white/60">Unterstützer</p>
           <p className="font-minecraft-ten text-3xl">{info.supporters.toLocaleString("de-DE")}</p>
         </div>
+        <div className="text-right">
+          <p className="font-minecraft-ten text-sm text-white/60">Käufe mit Code</p>
+          <p className="font-minecraft-ten text-3xl">{(info.purchases ?? 0).toLocaleString("de-DE")}</p>
+        </div>
       </div>
       <div className="flex gap-2">
         <input className={FIELD} value={draft} maxLength={16} onChange={(e) => setDraft(e.target.value)} />
