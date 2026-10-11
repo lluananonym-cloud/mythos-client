@@ -10,6 +10,7 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayDeque;
@@ -17,7 +18,7 @@ import java.util.Deque;
 
 /** Client-Features wie im NoRisk Client: Zoom, Fullbright, Toggle-Sprint und HUD (FPS, CPS, Tasten, Koordinaten). */
 public final class Features {
-    private static final String CATEGORY = "category.mythosclient";
+    private static final KeyBinding.Category CATEGORY = KeyBinding.Category.create(Identifier.of("mythosclient", "main"));
     private static KeyBinding zoomKey;
     private static KeyBinding fullbrightKey;
     private static KeyBinding sprintKey;
@@ -111,16 +112,16 @@ public final class Features {
 
         int line = 10;
         if (config.fps) {
-            ctx.drawTextWithShadow(client.textRenderer, Text.literal(client.getCurrentFps() + " FPS"), 4, y, 0xFFFFFF);
+            ctx.drawTextWithShadow(client.textRenderer, Text.literal(client.getCurrentFps() + " FPS"), 4, y, 0xFFFFFFFF);
             y += line;
         }
         if (config.cps) {
-            ctx.drawTextWithShadow(client.textRenderer, Text.literal(LEFT_CLICKS.size() + " | " + RIGHT_CLICKS.size() + " CPS"), 4, y, 0xFFFFFF);
+            ctx.drawTextWithShadow(client.textRenderer, Text.literal(LEFT_CLICKS.size() + " | " + RIGHT_CLICKS.size() + " CPS"), 4, y, 0xFFFFFFFF);
             y += line;
         }
         if (config.coords && client.player != null) {
             String pos = String.format("XYZ %.1f / %.1f / %.1f", client.player.getX(), client.player.getY(), client.player.getZ());
-            ctx.drawTextWithShadow(client.textRenderer, Text.literal(pos), 4, y, 0xFFFFFF);
+            ctx.drawTextWithShadow(client.textRenderer, Text.literal(pos), 4, y, 0xFFFFFFFF);
             y += line;
         }
         if (config.keystrokes) {
@@ -141,7 +142,7 @@ public final class Features {
 
     private static void key(DrawContext ctx, MinecraftClient client, String label, boolean pressed, int x, int y, int w, int h) {
         ctx.fill(x, y, x + w, y + h, pressed ? 0xAAFFFFFF : 0x66000000);
-        int color = pressed ? 0x000000 : 0xFFFFFF;
+        int color = pressed ? 0xFF000000 : 0xFFFFFFFF;
         ctx.drawText(client.textRenderer, label, x + (w - client.textRenderer.getWidth(label)) / 2, y + (h - 8) / 2, color, false);
     }
 

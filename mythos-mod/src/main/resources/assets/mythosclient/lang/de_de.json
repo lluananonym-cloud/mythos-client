@@ -2,5 +2,6 @@
   "category.mythosclient": "Mythos Client",
   "key.mythosclient.zoom": "Zoom",
   "key.mythosclient.fullbright": "Fullbright",
-  "key.mythosclient.togglesprint": "Toggle-Sprint"
+  "key.mythosclient.togglesprint": "Toggle-Sprint",
+  "key.category.mythosclient.main": "Mythos Client"
 }

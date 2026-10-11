@@ -2,7 +2,8 @@ package gg.mythoscraft.client.mixin;
 
 import gg.mythoscraft.client.CapeManager;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.util.SkinTextures;
+import net.minecraft.entity.player.SkinTextures;
+import net.minecraft.util.AssetInfo;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,6 +18,7 @@ public abstract class AbstractClientPlayerEntityMixin {
         Identifier cape = CapeManager.capeFor(((AbstractClientPlayerEntity) (Object) this).getUuid());
         if (cape == null) return;
         SkinTextures s = cir.getReturnValue();
-        cir.setReturnValue(new SkinTextures(s.texture(), s.textureUrl(), cape, cape, s.model(), s.secure()));
+        AssetInfo.TextureAssetInfo asset = new AssetInfo.TextureAssetInfo(cape, cape);
+        cir.setReturnValue(new SkinTextures(s.body(), asset, asset, s.model(), s.secure()));
     }
 }

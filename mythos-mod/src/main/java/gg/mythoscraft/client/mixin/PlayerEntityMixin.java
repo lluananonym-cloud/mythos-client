@@ -16,7 +16,7 @@ public abstract class PlayerEntityMixin {
     @Inject(method = "getDisplayName", at = @At("RETURN"), cancellable = true)
     private void mythos$addLogo(CallbackInfoReturnable<Text> cir) {
         PlayerEntity self = (PlayerEntity) (Object) this;
-        if (!self.getWorld().isClient) return;
+        if (!(self instanceof net.minecraft.client.network.AbstractClientPlayerEntity)) return;
         Boolean plus = MythosClient.playerStatus(self.getUuid());
         if (plus == null) return;
         MutableText name = MythosClient.icon().append(Text.literal(" "));

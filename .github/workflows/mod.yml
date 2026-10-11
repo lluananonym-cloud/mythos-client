@@ -28,7 +28,32 @@ jobs:
           if [ -n "$SUPABASE_ACCESS_TOKEN" ] && REF=$(.github/scripts/mythos-server.sh ref); then
             echo "api.url=https://$REF.supabase.co/functions/v1/mcc" > mythos-mod/src/main/resources/mythos.properties
           fi
-      - run: chmod +x gradlew && ./gradlew build --no-daemon
+      - name: Passende Fabric-Versionen holen
+        run: |
+          MC=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2)
+          YARN=$(curl -fsS "https://meta.fabricmc.net/v2/versions/yarn/$MC" | jq -r '.[0].version')
+          LOADER=$(curl -fsS https://meta.fabricmc.net/v2/versions/loader | jq -r '[.[] | select(.stable)][0].version')
+          LOOM=$(curl -fsS https://maven.fabricmc.net/net/fabricmc/fabric-loom/maven-metadata.xml | grep -o '<version>[0-9.]*</version>' | sed 's/<[^>]*>//g' | sort -V | tail -1)
+          API=$(curl -fsS https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml | grep -o "<version>[^<]*+$MC</version>" | sed 's/<[^>]*>//g' | sort -V | tail -1)
+          echo "Minecraft $MC, yarn $YARN, loader $LOADER, loom $LOOM, fabric-api $API"
+          sed -i "s/^yarn_mappings=.*/yarn_mappings=$YARN/; s/^loader_version=.*/loader_version=$LOADER/; s/^loom_version=.*/loom_version=$LOOM/; s/^fabric_version=.*/fabric_version=$API/" gradle.properties
+          cat gradle.properties
+      - id: gradle
+        run: chmod +x gradlew && ./gradlew build --no-daemon
+      - name: Signaturen zeigen (nur bei Fehler)
+        if: failure() && steps.gradle.outcome == 'failure'
+        run: |
+          JAR=$(find .gradle ~/.gradle/caches -name '*.jar' -path '*minecraft*' 2>/dev/null | while read j; do unzip -l "$j" 2>/dev/null | grep -q 'net/minecraft/client/MinecraftClient.class' && echo "$j"; done | grep -iv sources | head -1)
+          echo "JAR: $JAR"
+          for c in net.minecraft.entity.player.SkinTextures net.minecraft.util.AssetInfo net.minecraft.util.AssetInfo\$TextureAssetInfo \
+                   net.minecraft.client.option.KeyBinding\$Category net.minecraft.text.StyleSpriteSource\$Font \
+                   net.minecraft.client.texture.NativeImageBackedTexture; do
+            echo "== $c"; javap -cp "$JAR" "$c" 2>&1 | head -40
+          done
+          javap -cp "$JAR" net.minecraft.client.MinecraftClient | grep -i -E 'session|debug' | head
+          javap -cp "$JAR" net.minecraft.client.network.AbstractClientPlayerEntity | head -30
+          javap -cp "$JAR" net.minecraft.text.Style | grep -i font
+
       - uses: actions/upload-artifact@v4
         with:
           name: mythos-client-mod

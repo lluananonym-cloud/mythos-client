@@ -77,7 +77,8 @@ public final class CapeManager {
                         for (int i = 0; i < count; i++) {
                             NativeImage image = NativeImage.read(new ByteArrayInputStream(frames[i]));
                             ids[i] = Identifier.of("mythosclient", "capes/" + key + "/" + i);
-                            client.getTextureManager().registerTexture(ids[i], new NativeImageBackedTexture(image));
+                            Identifier id = ids[i];
+                            client.getTextureManager().registerTexture(id, new NativeImageBackedTexture(id::toString, image));
                         }
                         LOADED.put(info.url(), new LoadedCape(ids, info.frameTimeMs()));
                     } catch (Exception e) {

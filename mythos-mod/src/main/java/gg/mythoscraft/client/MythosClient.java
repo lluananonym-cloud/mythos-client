@@ -9,12 +9,13 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.command.CommandSource;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
+import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -69,15 +70,15 @@ public class MythosClient implements ClientModInitializer {
                             return 1;
                         }))));
 
-        HudRenderCallback.EVENT.register((ctx, tickCounter) -> {
+        HudElementRegistry.addLast(Identifier.of("mythosclient", "hud"), (ctx, tickCounter) -> {
             MinecraftClient mc = MinecraftClient.getInstance();
-            if (!MythosConfig.get().hud || mc.options.hudHidden || mc.getDebugHud().shouldShowDebugHud()) return;
+            if (!MythosConfig.get().hud || mc.options.hudHidden) return;
             MutableText line = icon().append(Text.literal(" Mythos Client").formatted(Formatting.WHITE));
             if (profile != null) {
                 if (plus()) line.append(Text.literal(" Plus").formatted(Formatting.GOLD));
                 line.append(Text.literal(" · " + coins() + " Coins").formatted(Formatting.YELLOW));
             }
-            ctx.drawTextWithShadow(mc.textRenderer, line, 4, 4, 0xFFFFFF);
+            ctx.drawTextWithShadow(mc.textRenderer, line, 4, 4, 0xFFFFFFFF);
             Features.renderHud(ctx, mc, 16);
         });
 
@@ -172,7 +173,7 @@ public class MythosClient implements ClientModInitializer {
     }
 
     public static MutableText icon() {
-        return Text.literal("").setStyle(Style.EMPTY.withFont(ICON_FONT).withColor(Formatting.WHITE));
+        return Text.literal("").setStyle(Style.EMPTY.withFont(new StyleSpriteSource.Font(ICON_FONT)).withColor(Formatting.WHITE));
     }
 
     /** null = kein Mythos-Client-Spieler, sonst ob er Plus hat. */

@@ -6,6 +6,11 @@ on:
       - '**' # Build on push to v3 branch
     tags:
       - "v*"  # Release on v* tags
+    paths-ignore:
+      - "mythos-mod/**"
+      - "supabase/**"
+      - ".github/workflows/mod.yml"
+      - ".github/workflows/server.yml"
   workflow_dispatch: {} # Allow manual dispatch
 
 jobs:
