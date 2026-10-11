@@ -3,7 +3,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import type {
   CosmeticAssetUrls,
   ParticleAssetEntry,
-} from "@noriskclient/nrc-skin-renderer/core";
+} from "../skin-renderer/core";
 
 export interface ResolvedCosmetic {
   cosmeticId: string;

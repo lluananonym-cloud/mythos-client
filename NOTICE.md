@@ -14,8 +14,13 @@ Geändert von Mythoscraft (MinePro641), ab Oktober 2026:
   mit Bewerbung, Live-Abonnenten und Creator-Codes.
 - Eigenes Design: Schrift Outfit, runde Ecken, Mythos-Hintergrund und -Farben.
 - Neu: eigene Fabric-Mod `mythos-mod/` und eigener Server `supabase/`.
+- Das nicht frei lizenzierte Paket `@noriskclient/nrc-skin-renderer` entfernt; die 3D-Spieleranzeige
+  nutzt jetzt einen eigenen Renderer (`src/lib/skin-renderer/`) auf Basis von skinview3d.
 
 Mythos Client ist kein offizielles Produkt von NoRisk und steht in keiner Verbindung zu NoRisk.
 Der vollständige Quellcode dieser Fassung: https://github.com/lluananonym-cloud/mythos-client
 
 Schriftart Outfit: © The Outfit Project Authors, SIL Open Font License 1.1 (public/fonts/OFL-Outfit.txt).
+
+skinview3d und skinview-utils: © 2014-2018 Kent Rasmussen, © 2017-2022 Haowei Wen, Sean Boult und
+Mitwirkende, MIT-Lizenz (https://github.com/bs-community/skinview3d).

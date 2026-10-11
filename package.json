@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@iconify/react": "^5.2.1",
-    "@noriskclient/nrc-skin-renderer": "0.10.1",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "8.13.7",
     "@sfirew/minecraft-motd-parser": "^1.1.4",
@@ -56,6 +55,7 @@
     "react-window": "^1.8.11",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
+    "skinview3d": "^3.4.2",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
     "tailwindcss-animate": "^1.0.7",

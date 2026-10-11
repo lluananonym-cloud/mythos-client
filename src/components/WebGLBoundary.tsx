@@ -2,7 +2,7 @@
 
 import { Component, type ReactNode } from "react";
 
-import { getWebGLSupport } from "@noriskclient/nrc-skin-renderer";
+import { getWebGLSupport } from "../lib/skin-renderer";
 import { logWarn } from "../utils/logging-utils";
 
 interface Props {

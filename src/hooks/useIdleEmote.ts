@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
-import type { EmoteAssetUrls } from "@noriskclient/nrc-skin-renderer/core";
+import type { EmoteAssetUrls } from "../lib/skin-renderer/core";
 
 import type { EmoteAssetUrlsDto } from "../types/cosmetic";
 

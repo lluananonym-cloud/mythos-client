@@ -2,9 +2,9 @@ import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import {
   SkinSnapshotRenderer,
   type SkinSnapshotRequest,
-} from "@noriskclient/nrc-skin-renderer/snapshot";
+} from "./skin-renderer/snapshot";
 
-import { isWebGLAvailable, renderFlatSkin } from "@noriskclient/nrc-skin-renderer";
+import { isWebGLAvailable, renderFlatSkin } from "./skin-renderer";
 
 const RENDERER_VERSION =
   typeof __SKIN_RENDERER_VERSION__ === "string"

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal } from "../ui/Modal";
-import { SkinRenderer } from "@noriskclient/nrc-skin-renderer/react";
+import { SkinRenderer } from "../../lib/skin-renderer/react";
 import { WebGLBoundary } from "../WebGLBoundary";
 import { CapeImage } from "./CapeImage";
 import { Button } from "../ui/buttons/Button";

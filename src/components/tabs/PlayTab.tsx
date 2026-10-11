@@ -18,7 +18,7 @@ import { ReferralBanner } from "../ui/ReferralBanner";
 import { ApplixirAdButton } from "../ui/ApplixirAdButton";
 import { ToggleSwitch } from "../ui/ToggleSwitch";
 import { useQualitySettingsStore } from "../../store/quality-settings-store";
-import { isWebGLAvailable } from "@noriskclient/nrc-skin-renderer";
+import { isWebGLAvailable } from "../../lib/skin-renderer";
 import { useLauncherTheme } from "../../hooks/useLauncherTheme";
 import { setDiscordState } from "../../utils/discordRpc";
 import { useTranslation } from "react-i18next";

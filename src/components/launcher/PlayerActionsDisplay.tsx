@@ -8,7 +8,7 @@ import { useThemeStore } from '../../store/useThemeStore';
 import { Icon } from '@iconify/react';
 import { ServerLaunchCard } from './ServerLaunchCard';
 import { useProfileStore } from '../../store/profile-store';
-import type { PromoOutlineConfig } from '@noriskclient/nrc-skin-renderer/postfx';
+import type { PromoOutlineConfig } from '../../lib/skin-renderer/postfx';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { StaticTooltip } from '../ui/Tooltip';

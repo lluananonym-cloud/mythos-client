@@ -6,7 +6,8 @@ import { readFileSync } from 'fs';
 const pkg = JSON.parse(
   readFileSync(resolve(__dirname, 'package.json'), 'utf-8'),
 ) as { dependencies: Record<string, string> };
-const skinRendererVersion = pkg.dependencies['@noriskclient/nrc-skin-renderer'];
+// Mythos: eigener Renderer auf skinview3d-Basis; die Version fließt in den Cache-Schlüssel der Skin-Vorschauen.
+const skinRendererVersion = `mythos-skinview3d-${pkg.dependencies['skinview3d']}`;
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;

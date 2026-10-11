@@ -3,7 +3,7 @@ import type {
   NametagOptions,
   SkinSnapshotRequest,
   SnapshotCosmetic,
-} from "@noriskclient/nrc-skin-renderer/snapshot";
+} from "../lib/skin-renderer/snapshot";
 
 import { getSkinPreview } from "../lib/skin-preview";
 import { useSkinStore } from "../store/useSkinStore";

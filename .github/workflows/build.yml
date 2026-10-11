@@ -90,20 +90,6 @@ jobs:
             echo "::warning::Kein eigener Mythos-Server gefunden, der Launcher nutzt die Fallback-Adresse."
           fi
 
-  # --- Mythos: Lizenz der privaten NoRisk-Pakete anzeigen (für die Veröffentlichung) ---
-  deps-license:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Lizenz von @noriskclient/nrc-skin-renderer
-        run: |
-          REG=https://nexus.norisk.gg/repository/npm/
-          npm view @noriskclient/nrc-skin-renderer@0.10.1 name version license repository homepage --registry "$REG" || true
-          mkdir -p /tmp/p && cd /tmp/p && npm pack @noriskclient/nrc-skin-renderer@0.10.1 --registry "$REG" >/dev/null 2>&1 || true
-          ls /tmp/p; tar -tzf /tmp/p/*.tgz 2>/dev/null | grep -i -E 'licen|readme|package.json' || true
-          tar -xzf /tmp/p/*.tgz -C /tmp/p 2>/dev/null && { head -40 /tmp/p/package/LICENSE* 2>/dev/null; grep -i -A2 '"license' /tmp/p/package/package.json; head -30 /tmp/p/package/README* 2>/dev/null; } || true
-
   # --- JOB 1: Build & Rename ---
   build:
     needs: [test, macos-icon, server-url]

@@ -2,13 +2,13 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SkinRenderer } from '@noriskclient/nrc-skin-renderer/react';
-import type { PromoOutlineConfig } from '@noriskclient/nrc-skin-renderer/postfx';
-import type { SnapshotCosmetic } from '@noriskclient/nrc-skin-renderer/snapshot';
+import { SkinRenderer } from '../../lib/skin-renderer/react';
+import type { PromoOutlineConfig } from '../../lib/skin-renderer/postfx';
+import type { SnapshotCosmetic } from '../../lib/skin-renderer/snapshot';
 
 import { SkinViewer } from './SkinViewer';
 import { WebGLBoundary } from '../WebGLBoundary';
-import { isWebGLAvailable } from '@noriskclient/nrc-skin-renderer';
+import { isWebGLAvailable } from '../../lib/skin-renderer';
 import { useActiveSkinTexture } from '../../hooks/useActiveSkinTexture';
 import { useEquippedCosmetics } from '../../hooks/useEquippedCosmetics';
 import { useIdleEmote } from '../../hooks/useIdleEmote';

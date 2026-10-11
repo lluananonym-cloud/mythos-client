@@ -25,7 +25,7 @@ import { useThemeStore } from "../../store/useThemeStore";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/buttons/Button";
 import { Modal } from "../ui/Modal";
-import { SkinRenderer } from "@noriskclient/nrc-skin-renderer/react";
+import { SkinRenderer } from "../../lib/skin-renderer/react";
 import { WebGLBoundary } from "../WebGLBoundary";
 import { useMinecraftAuthStore } from "../../store/minecraft-auth-store";
 import gsap from "gsap";
