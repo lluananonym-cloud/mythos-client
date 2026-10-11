@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /** Ersetzt Cape und Elytra durch das angelegte Mythos-Cape. */
 @Mixin(AbstractClientPlayerEntity.class)
 public abstract class AbstractClientPlayerEntityMixin {
-    @Inject(method = "getSkinTextures", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getSkin", at = @At("RETURN"), cancellable = true)
     private void mythos$cape(CallbackInfoReturnable<SkinTextures> cir) {
         Identifier cape = CapeManager.capeFor(((AbstractClientPlayerEntity) (Object) this).getUuid());
         if (cape == null) return;

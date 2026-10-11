@@ -52,6 +52,21 @@ public final class MythosApi {
         });
     }
 
+    /** Wie Minecrafts joinServer: meldet bei Mojang, dass dieses Konto der serverId beitritt (für hasJoined im Backend). */
+    public static void joinServer(String accessToken, String uuidNoDashes, String serverId) throws Exception {
+        JsonObject body = new JsonObject();
+        body.addProperty("accessToken", accessToken);
+        body.addProperty("selectedProfile", uuidNoDashes);
+        body.addProperty("serverId", serverId);
+        HttpRequest req = HttpRequest.newBuilder(URI.create("https://sessionserver.mojang.com/session/minecraft/join"))
+                .timeout(Duration.ofSeconds(15))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                .build();
+        HttpResponse<String> res = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
+        if (res.statusCode() >= 300) throw new IllegalStateException("Mojang join: " + res.statusCode());
+    }
+
     public static CompletableFuture<JsonObject> session(String username, String serverId) {
         JsonObject body = new JsonObject();
         body.addProperty("username", username);

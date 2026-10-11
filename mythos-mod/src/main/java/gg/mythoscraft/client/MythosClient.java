@@ -116,7 +116,7 @@ public class MythosClient implements ClientModInitializer {
         String serverId = HexFormat.of().formatHex(random);
         Thread t = new Thread(() -> {
             try {
-                client.getSessionService().joinServer(uuid, accessToken, serverId);
+                MythosApi.joinServer(accessToken, clean(uuid), serverId);
                 JsonObject res = MythosApi.session(username, serverId).join();
                 token = res.get("token").getAsString();
                 profile = res.getAsJsonObject("profile");
