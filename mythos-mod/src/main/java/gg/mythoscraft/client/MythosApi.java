@@ -84,6 +84,36 @@ public final class MythosApi {
         return call("profile", new JsonObject(), token);
     }
 
+    public static CompletableFuture<JsonObject> cosmetics(String token) {
+        return call("cosmetics", new JsonObject(), token);
+    }
+
+    public static CompletableFuture<JsonObject> buy(String token, String cosmeticId) {
+        JsonObject body = new JsonObject();
+        body.addProperty("cosmeticId", cosmeticId);
+        return call("buy", body, token);
+    }
+
+    /** cosmeticId null = Cape ablegen. */
+    public static CompletableFuture<JsonObject> equip(String token, String cosmeticId) {
+        JsonObject body = new JsonObject();
+        if (cosmeticId == null) body.add("cosmeticId", com.google.gson.JsonNull.INSTANCE);
+        else body.addProperty("cosmeticId", cosmeticId);
+        return call("equip", body, token);
+    }
+
+    /** Creator-Code eintragen; null = keinen Creator mehr unterstützen. */
+    public static CompletableFuture<JsonObject> support(String token, String code) {
+        JsonObject body = new JsonObject();
+        if (code == null) body.add("code", com.google.gson.JsonNull.INSTANCE);
+        else body.addProperty("code", code);
+        return call("support", body, token);
+    }
+
+    public static CompletableFuture<JsonObject> creatorInfo(String token) {
+        return call("creator-info", new JsonObject(), token);
+    }
+
     public static CompletableFuture<JsonObject> players(Collection<String> uuids) {
         JsonObject body = new JsonObject();
         JsonArray arr = new JsonArray();

@@ -41,6 +41,8 @@ public class MythosClient implements ClientModInitializer {
     private static volatile String token;
     private static volatile JsonObject profile;
     private int ticks;
+    /** Shop erst im nächsten Tick öffnen, sonst schließt der Chat ihn gleich wieder. */
+    private static volatile boolean openShop;
 
     @Override
     public void onInitializeClient() {
@@ -58,6 +60,23 @@ public class MythosClient implements ClientModInitializer {
                             }
                             return 1;
                         })
+                        .then(ClientCommandManager.literal("shop").executes(ctx -> {
+                            openShop = true;
+                            return 1;
+                        }))
+                        .then(ClientCommandManager.literal("code")
+                                .executes(ctx -> {
+                                    showCode();
+                                    return 1;
+                                })
+                                .then(ClientCommandManager.literal("entfernen").executes(ctx -> {
+                                    setCode(null);
+                                    return 1;
+                                }))
+                                .then(ClientCommandManager.argument("code", StringArgumentType.word()).executes(ctx -> {
+                                    setCode(StringArgumentType.getString(ctx, "code"));
+                                    return 1;
+                                })))
                         .then(ClientCommandManager.literal("hud")
                                 .executes(ctx -> hud(ctx.getSource(), "all"))
                                 .then(ClientCommandManager.argument("element", StringArgumentType.word())
@@ -83,6 +102,10 @@ public class MythosClient implements ClientModInitializer {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (openShop || Features.shopPressed()) {
+                openShop = false;
+                client.setScreen(new ShopScreen());
+            }
             if (client.world == null || ++ticks % 100 != 0) return;
             List<String> unknown = new ArrayList<>();
             long now = System.currentTimeMillis();
@@ -163,6 +186,61 @@ public class MythosClient implements ClientModInitializer {
         });
     }
 
+    private static void showCode() {
+        if (token == null) {
+            chat(prefix().append(Text.literal("Nicht angemeldet.").formatted(Formatting.RED)));
+            return;
+        }
+        MythosApi.creatorInfo(token).thenAccept(res -> {
+            JsonElement s = res.get("supporting");
+            String text = s != null && s.isJsonObject()
+                    ? "Du unterstützt " + s.getAsJsonObject().get("code").getAsString() + "."
+                    : "Kein Creator-Code eingetragen. /mcc code <code>";
+            if (res.has("code") && !res.get("code").isJsonNull()) {
+                text += " Dein eigener Code: " + res.get("code").getAsString()
+                        + " (" + res.get("supporters").getAsInt() + " Unterstützer)";
+            }
+            chat(prefix().append(Text.literal(text)));
+        }).exceptionally(e -> error(e));
+    }
+
+    private static void setCode(String code) {
+        if (token == null) {
+            chat(prefix().append(Text.literal("Nicht angemeldet.").formatted(Formatting.RED)));
+            return;
+        }
+        MythosApi.support(token, code).thenAccept(res -> {
+            JsonElement s = res.get("supporting");
+            chat(prefix().append(Text.literal(s != null && s.isJsonObject()
+                    ? "Du unterstützt jetzt " + s.getAsJsonObject().get("code").getAsString() + ". Danke!"
+                    : "Creator-Code entfernt.").formatted(Formatting.GREEN)));
+        }).exceptionally(e -> error(e));
+    }
+
+    private static Void error(Throwable e) {
+        Throwable cause = e.getCause() != null ? e.getCause() : e;
+        chat(prefix().append(Text.literal(String.valueOf(cause.getMessage())).formatted(Formatting.RED)));
+        return null;
+    }
+
+    public static String token() {
+        return token;
+    }
+
+    public static JsonObject profile() {
+        return profile;
+    }
+
+    public static void setProfile(JsonObject p) {
+        if (p != null) profile = p;
+    }
+
+    /** Eigenes Cape beim nächsten Tick neu vom Server holen. */
+    public static void refreshOwnCape() {
+        UUID uuid = MinecraftClient.getInstance().getSession().getUuidOrNull();
+        if (uuid != null) ASKED.remove(clean(uuid));
+    }
+
     private static void chat(Text text) {
         MinecraftClient mc = MinecraftClient.getInstance();
         mc.execute(() -> mc.inGameHud.getChatHud().addMessage(text));
@@ -181,12 +259,12 @@ public class MythosClient implements ClientModInitializer {
         return PLAYERS.get(clean(uuid));
     }
 
-    private static boolean plus() {
+    public static boolean plus() {
         JsonObject p = profile;
         return p != null && p.get("plus").getAsBoolean();
     }
 
-    private static long coins() {
+    public static long coins() {
         JsonObject p = profile;
         return p == null ? 0 : p.get("coins").getAsLong();
     }

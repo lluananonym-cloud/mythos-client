@@ -22,6 +22,7 @@ public final class Features {
     private static KeyBinding zoomKey;
     private static KeyBinding fullbrightKey;
     private static KeyBinding sprintKey;
+    private static KeyBinding shopKey;
 
     private static Integer fovBeforeZoom;
     private static Double gammaBeforeFullbright;
@@ -36,6 +37,8 @@ public final class Features {
         zoomKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mythosclient.zoom", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_C, CATEGORY));
         fullbrightKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mythosclient.fullbright", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, CATEGORY));
         sprintKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mythosclient.togglesprint", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY));
+
+        shopKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mythosclient.shop", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_M, CATEGORY));
 
         ClientTickEvents.END_CLIENT_TICK.register(Features::tick);
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
@@ -78,6 +81,13 @@ public final class Features {
                 && !client.player.isSneaking() && !client.player.horizontalCollision) {
             client.player.setSprinting(true);
         }
+    }
+
+    /** Wurde die Shop-Taste gedrückt (nur ohne offenes Menü)? */
+    public static boolean shopPressed() {
+        boolean pressed = false;
+        while (shopKey != null && shopKey.wasPressed()) pressed = true;
+        return pressed && MinecraftClient.getInstance().currentScreen == null;
     }
 
     private static void stopZoom(MinecraftClient client) {

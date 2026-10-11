@@ -54,8 +54,9 @@ jobs:
           echo "JAR: $JAR"
           for c in net.minecraft.entity.player.SkinTextures net.minecraft.util.AssetInfo net.minecraft.util.AssetInfo\$TextureAssetInfo \
                    net.minecraft.client.option.KeyBinding\$Category net.minecraft.text.StyleSpriteSource\$Font \
-                   net.minecraft.client.texture.NativeImageBackedTexture; do
-            echo "== $c"; javap -cp "$JAR" "$c" 2>&1 | head -40
+                   net.minecraft.client.texture.NativeImageBackedTexture net.minecraft.client.gui.screen.Screen \
+                   net.minecraft.client.gui.widget.TextFieldWidget net.minecraft.client.gui.widget.ButtonWidget\$Builder; do
+            echo "== $c"; javap -cp "$JAR" "$c" 2>&1 | head -80
           done
           javap -cp "$JAR" net.minecraft.client.MinecraftClient | grep -i -E 'session|debug' | head
           javap -cp "$JAR" net.minecraft.client.network.AbstractClientPlayerEntity | head -30
