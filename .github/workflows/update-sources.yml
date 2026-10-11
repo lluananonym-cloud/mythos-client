@@ -7,6 +7,10 @@ on:
       - "yarn.lock"
   workflow_dispatch:
 
+# Der Job committet die neu erzeugten Dateien zurück in den Branch.
+permissions:
+  contents: write
+
 jobs:
   update-sources:
     runs-on: ubuntu-latest
